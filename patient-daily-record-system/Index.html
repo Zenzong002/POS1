@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Patient Daily Record System - B1</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-size: 16px;
+    }
+
+    .container-main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      min-height: 44px;
+      font-size: 16px;
+    }
+
+    .tab-btn:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+      font-size: 16px;
+      min-height: 44px;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.75rem 2rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      min-height: 44px;
+      font-size: 16px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #667eea;
+      padding: 0.75rem 2rem;
+      border-radius: 0.5rem;
+      border: 2px solid #667eea;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      min-height: 44px;
+      font-size: 16px;
+    }
+
+    .btn-secondary:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 0.5rem;
+      color: white;
+      font-weight: 500;
+      z-index: 9999;
+      animation: slideIn 0.3s ease-out;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      max-width: 90%;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .notification.success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .notification.error {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .notification.info {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    .checkbox-custom {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .label-text {
+      font-weight: 500;
+      color: #334155;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr;
+      }
+
+      .tab-btn {
+        padding: 0.6rem 1rem;
+        font-size: 14px;
+      }
+
+      .container-main {
+        padding: 0.5rem;
+      }
+
+      .card {
+        padding: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        font-size: 16px;
+      }
+
+      .notification {
+        right: 10px;
+        left: 10px;
+        max-width: calc(100% - 20px);
+      }
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1e40af;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-main">
+    <!-- Header -->
+    <div class="card text-center mb-6">
+      <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+        Patient Daily Record System
+      </h1>
+      <p class="text-gray-600 mt-2">ระบบบันทึกข้อมูลผู้ป่วยรายวัน - ผู้ป่วย B1</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="card mb-4">
+      <div class="flex flex-wrap gap-2 justify-center">
+        <button class="tab-btn active" onclick="switchTab('vitals')">💉 Vital Signs</button>
+        <button class="tab-btn" onclick="switchTab('activity')">🏃 Activity</button>
+        <button class="tab-btn" onclick="switchTab('medication')">💊 Medication</button>
+        <button class="tab-btn" onclick="switchTab('lab')">🔬 Lab</button>
+        <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="tab-btn" onclick="switchTab('summary')">📋 Summary</button>
+        <button class="tab-btn" onclick="switchTab('medlog')">📜 Med Log</button>
+        <button class="tab-btn" onclick="switchTab('lablog')">📜 Lab Log</button>
+      </div>
+    </div>
+
+    <!-- TAB 1: VITAL SIGNS (+ I/O + Clinical) -->
+    <div id="tab-vitals" class="tab-content active">
+      <div class="card">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">💉 Vital Signs + I/O + Clinical Observation</h2>
+
+        <form id="form-vitals" onsubmit="submitVitals(event)">
+          <!-- วันที่และเวลาบันทึก -->
+          <div class="grid-2 mb-4">
+            <div>
+              <label class="label-text">📅 วันที่บันทึก</label>
+              <input type="date" id="vitals-date" class="form-input" required>
+            </div>
+            <div>
+              <label class="label-text">⏰ เวลาบันทึก</label>
+              <input type="time" id="vitals-time" class="form-input" required>
+            </div>
+          </div>
+
+          <h3 class="text-xl font-semibold mb-3 text-blue-600">Vital Signs</h3>
+          <div class="grid-3 mb-4">
+            <div>
+              <label class="label-text">🌡️ Temperature (°C)</label>
+              <input type="number" step="0.1" id="vitals-temp" class="form-input" placeholder="36.5">
+            </div>
+            <div>
+              <label class="label-text">💓 Heart Rate (bpm)</label>
+              <input type="number" id="vitals-hr" class="form-input" placeholder="80">
+            </div>
+            <div>
+              <label class="label-text">🫁 Respiratory Rate (/min)</label>
+              <input type="number" id="vitals-rr" class="form-input" placeholder="18">
+            </div>
+          </div>
+
+          <div class="grid-3 mb-4">
+            <div>
+              <label class="label-text">🩸 BP Systolic (mmHg)</label>
+              <input type="number" id="vitals-bp-sys" class="form-input" placeholder="120">
+            </div>
+            <div>
+              <label class="label-text">🩸 BP Diastolic (mmHg)</label>
+              <input type="number" id="vitals-bp-dia" class="form-input" placeholder="80">
+            </div>
+            <div>
+              <label class="label-text">💨 SpO₂ (%)</label>
+              <input type="number" id="vitals-spo2" class="form-input" placeholder="98">
+            </div>
+          </div>
+
+          <div class="grid-3 mb-4">
+            <div>
+              <label class="label-text">🧠 GCS (3-15)</label>
+              <input type="number" min="3" max="15" id="vitals-gcs" class="form-input" placeholder="15">
+            </div>
+            <div>
+              <label class="label-text">🫁 O₂ Support</label>
+              <select id="vitals-o2support" class="form-input">
+                <option value="">-- เลือก --</option>
+                <option value="Room Air">Room Air</option>
+                <option value="Nasal Cannula">Nasal Cannula (NC)</option>
+                <option value="Simple Mask">Simple Mask</option>
+                <option value="PRM">Partial Rebreather Mask (PRM)</option>
+                <option value="Venturi Mask">Venturi Mask</option>
+                <option value="CPAP">CPAP</option>
+                <option value="BiPAP">BiPAP</option>
+                <option value="MV">Mechanical Ventilation (MV)</option>
+                <option value="HFNC">HFNC</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-text">💨 O₂ LPM</label>
+              <input type="number" step="0.5" id="vitals-o2lpm" class="form-input" placeholder="2">
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-green-600">Intake / Output</h3>
+          <div class="grid-4 mb-4">
+            <div>
+              <label class="label-text">💧 Intake (ml)</label>
+              <input type="number" id="vitals-intake" class="form-input" placeholder="0">
+            </div>
+            <div>
+              <label class="label-text">💦 Urine (ml)</label>
+              <input type="number" id="vitals-urine" class="form-input" placeholder="0">
+            </div>
+            <div>
+              <label class="label-text">💩 Stool (ml)</label>
+              <input type="number" id="vitals-stool" class="form-input" placeholder="0">
+            </div>
+            <div>
+              <label class="label-text">🧪 Suction (ml)</label>
+              <input type="number" id="vitals-suction" class="form-input" placeholder="0">
+            </div>
+          </div>
+
+          <div class="grid-3 mb-4">
+            <div>
+              <label class="label-text">🎨 Secretion Color</label>
+              <select id="vitals-secretion-color" class="form-input">
+                <option value="">-- เลือก --</option>
+                <option value="Clear">ใส (Clear)</option>
+                <option value="White/Cloudy">ขาวขุ่น (White/Cloudy)</option>
+                <option value="Yellow">เหลือง (Yellow)</option>
+                <option value="Green">เขียว (Green)</option>
+                <option value="Red/Bloody">แดง (Red/Bloody)</option>
+                <option value="Brown">น้ำตาล (Brown)</option>
+                <option value="Black">ดำ (Black)</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-text">🎨 Stool Color</label>
+              <select id="vitals-stool-color" class="form-input">
+                <option value="">-- เลือก --</option>
+                <option value="Brown">น้ำตาล (Brown - Normal)</option>
+                <option value="Yellow">เหลือง (Yellow)</option>
+                <option value="Green">เขียว (Green)</option>
+                <option value="Black">ดำ (Black - Melena)</option>
+                <option value="Red">แดง (Red - Fresh blood)</option>
+                <option value="Pale/Gray">ซีด/เทา (Pale/Gray)</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-text">💩 Stool Type (Bristol)</label>
+              <select id="vitals-stool-type" class="form-input">
+                <option value="">-- เลือก --</option>
+                <option value="Type 1">Type 1 - ก้อนแข็งเล็กๆ</option>
+                <option value="Type 2">Type 2 - ก้อนยาว ผิวขรุขระ</option>
+                <option value="Type 3">Type 3 - ก้อนยาว มีรอยแตก</option>
+                <option value="Type 4">Type 4 - ก้อนยาว ผิวเนียน (Ideal)</option>
+                <option value="Type 5">Type 5 - ก้อนนุ่มๆ ขอบชัดเจน</option>
+                <option value="Type 6">Type 6 - ก้อนฟูๆ ขอบยุ่ย</option>
+                <option value="Type 7">Type 7 - เหลวเป็นน้ำ</option>
+              </select>
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-purple-600">Clinical Observation</h3>
+          <div class="grid-3 mb-4">
+            <div>
+              <label class="label-text">🔴 Rash (ผื่น)</label>
+              <select id="vitals-rash" class="form-input">
+                <option value="">-- เลือก --</option>
+                <option value="None">ไม่มี</option>
+                <option value="Mild">Mild (น้อย)</option>
+                <option value="Moderate">Moderate (ปานกลาง)</option>
+                <option value="Severe">Severe (มาก)</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-text">🫁 Lung Sound</label>
+              <select id="vitals-lung-sound" class="form-input">
+                <option value="">-- เลือก --</option>
+                <option value="Clear">Clear (ปกติ)</option>
+                <option value="Rhonchi">Rhonchi (เสียงแหบ)</option>
+                <option value="Wheezing">Wheezing (เสียงหวีด)</option>
+                <option value="Crackles">Crackles (เสียงแตก)</option>
+                <option value="Decreased">Decreased (ลดลง)</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-text">💧 Edema (บวมน้ำ)</label>
+              <select id="vitals-edema" class="form-input">
+                <option value="">-- เลือก --</option>
+                <option value="None">ไม่มี</option>
+                <option value="1+">1+ (เบา)</option>
+                <option value="2+">2+ (ปานกลาง)</option>
+                <option value="3+">3+ (มาก)</option>
+                <option value="4+">4+ (มากที่สุด)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-3 mb-6">
+            <div>
+              <label class="label-text">🔵 Cyanosis</label>
+              <select id="vitals-cyanosis" class="form-input">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-text">😮 Hypoxia</label>
+              <select id="vitals-hypoxia" class="form-input">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-text">⏱️ Try Wean (นาที)</label>
+              <input type="number" id="vitals-try-wean" class="form-input" placeholder="0">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary w-full">💾 บันทึก Vital Signs</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 2: ACTIVITY (PT/OT + Mobility + Sleep/Behavior) -->
+    <div id="tab-activity" class="tab-content">
+      <div class="card">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">🏃 Activity & Therapy</h2>
+
+        <form id="form-activity" onsubmit="submitActivity(event)">
+          <!-- วันที่และเวลาบันทึก -->
+          <div class="grid-2 mb-4">
+            <div>
+              <label class="label-text">📅 วันที่บันทึก</label>
+              <input type="date" id="activity-date" class="form-input" required>
+            </div>
+            <div>
+              <label class="label-text">⏰ เวลาบันทึก</label>
+              <input type="time" id="activity-time" class="form-input" required>
+            </div>
+          </div>
+
+          <h3 class="text-xl font-semibold mb-3 text-blue-600">Physical Therapy (PT)</h3>
+          <div class="grid-3 mb-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="pt-mobility" class="checkbox-custom">
+              <span>🚶 Mobility</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="pt-balance" class="checkbox-custom">
+              <span>⚖️ Balance</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="pt-strength" class="checkbox-custom">
+              <span>💪 Strength</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="pt-gait" class="checkbox-custom">
+              <span>🚶‍♂️ Gait</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="pt-aerobic" class="checkbox-custom">
+              <span>🏃‍♂️ Aerobic</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="pt-chestpt" class="checkbox-custom">
+              <span>🫁 Chest PT</span>
+            </label>
+          </div>
+
+          <h3 class="text-xl font-semibold mb-3 text-green-600">Occupational Therapy (OT)</h3>
+          <div class="grid-3 mb-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="ot-mouthcare" class="checkbox-custom">
+              <span>👄 Mouth Care</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="ot-oralmotor" class="checkbox-custom">
+              <span>🗣️ Oral Motor</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="ot-vitalstim" class="checkbox-custom">
+              <span>⚡ VitalStim</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="ot-speech" class="checkbox-custom">
+              <span>💬 Speech</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="ot-cognitive" class="checkbox-custom">
+              <span>🧠 Cognitive</span>
+            </label>
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-purple-600">Mobility Time</h3>
+          <div class="grid-2 mb-4">
+            <div>
+              <label class="label-text">🪑 Sitting Time (นาที)</label>
+              <input type="number" id="activity-sitting" class="form-input" placeholder="0">
+            </div>
+            <div>
+              <label class="label-text">🧍 Standing Time (นาที)</label>
+              <input type="number" id="activity-standing" class="form-input" placeholder="0">
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-indigo-600">Sleep & Apnea Monitoring</h3>
+          <div class="grid-4 mb-4">
+            <div>
+              <label class="label-text">☀️ Apnea Day (ครั้ง)</label>
+              <input type="number" id="activity-apnea-day" class="form-input" placeholder="0">
+            </div>
+            <div>
+              <label class="label-text">🌙 Apnea Night (ครั้ง)</label>
+              <input type="number" id="activity-apnea-night" class="form-input" placeholder="0">
+            </div>
+            <div>
+              <label class="label-text">☀️ Sleep Day (ชั่วโมง)</label>
+              <input type="number" step="0.5" id="activity-sleep-day" class="form-input" placeholder="0">
+            </div>
+            <div>
+              <label class="label-text">🌙 Sleep Night (ชั่วโมง)</label>
+              <input type="number" step="0.5" id="activity-sleep-night" class="form-input" placeholder="0">
+            </div>
+          </div>
+
+          <h3 class="text-xl font-semibold mb-3 text-red-600">Behavioral Issues</h3>
+          <div class="grid-2 mb-4">
+            <div>
+              <label class="label-text">😤 Agitation (ครั้ง)</label>
+              <input type="number" id="activity-agitation" class="form-input" placeholder="0">
+            </div>
+            <div>
+              <label class="label-text">😵 Delirium (ครั้ง)</label>
+              <input type="number" id="activity-delirium" class="form-input" placeholder="0">
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-orange-600">Common Symptoms</h3>
+          <div class="grid-4 mb-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="symptom-fever" class="checkbox-custom">
+              <span>🌡️ Fever</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="symptom-cough" class="checkbox-custom">
+              <span>😷 Cough</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="symptom-runny-nose" class="checkbox-custom">
+              <span>🤧 Runny Nose</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="symptom-vomiting" class="checkbox-custom">
+              <span>🤮 Vomiting</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="symptom-diarrhea" class="checkbox-custom">
+              <span>💩 Diarrhea</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="symptom-headache" class="checkbox-custom">
+              <span>🤕 Headache</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="symptom-seizure" class="checkbox-custom">
+              <span>⚡ Seizure</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="symptom-rash" class="checkbox-custom">
+              <span>🔴 Rash</span>
+            </label>
+          </div>
+
+          <h3 class="text-xl font-semibold mb-3 text-pink-600">Clinical Notes</h3>
+          <div class="mb-4">
+            <label class="label-text">💊 PRN Medication</label>
+            <input type="text" id="activity-prn" class="form-input" placeholder="ยาที่ใช้เมื่อจำเป็น">
+          </div>
+          <div class="mb-6">
+            <label class="label-text">📝 Chief Complaint</label>
+            <textarea id="activity-complaint" class="form-input" rows="3" placeholder="อาการสำคัญ/ข้อร้องเรียน"></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary w-full">💾 บันทึก Activity</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 3: MEDICATION -->
+    <div id="tab-medication" class="tab-content">
+      <div class="card">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">💊 Medication Administration Record</h2>
+
+        <form id="form-medication" onsubmit="submitMedication(event)">
+          <!-- วันที่และเวลาบันทึก -->
+          <div class="grid-2 mb-4">
+            <div>
+              <label class="label-text">📅 วันที่บันทึก</label>
+              <input type="date" id="med-date" class="form-input" required>
+            </div>
+            <div>
+              <label class="label-text">⏰ เวลาบันทึก</label>
+              <input type="time" id="med-time" class="form-input" required>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="label-text">💊 Drug Name (ชื่อยา)</label>
+            <input type="text" id="med-drug-name" class="form-input" required placeholder="เช่น Paracetamol">
+          </div>
+
+          <div class="grid-2 mb-4">
+            <div>
+              <label class="label-text">💉 Dose (ขนาด)</label>
+              <input type="text" id="med-dose" class="form-input" required placeholder="เช่น 500 mg">
+            </div>
+            <div>
+              <label class="label-text">🔄 Frequency (ความถี่)</label>
+              <select id="med-frequency" class="form-input" required>
+                <option value="">-- เลือก --</option>
+                <option value="od">od (วันละครั้ง)</option>
+                <option value="bid">bid (วันละ 2 ครั้ง)</option>
+                <option value="tid">tid (วันละ 3 ครั้ง)</option>
+                <option value="qid">qid (วันละ 4 ครั้ง)</option>
+                <option value="hs">hs (ก่อนนอน)</option>
+                <option value="pc">pc (หลังอาหาร)</option>
+                <option value="ac">ac (ก่อนอาหาร)</option>
+                <option value="PRN">PRN (เมื่อจำเป็น)</option>
+                <option value="EOD">EOD (วันเว้นวัน)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2 mb-4">
+            <div>
+              <label class="label-text">🩹 Route (เส้นทางการให้ยา)</label>
+              <select id="med-route" class="form-input" required>
+                <option value="">-- เลือก --</option>
+                <option value="PO">PO (ทางปาก)</option>
+                <option value="IV">IV (ทางเส้นเลือดดำ)</option>
+                <option value="IM">IM (ฉีดเข้ากล้ามเนื้อ)</option>
+                <option value="SC">SC (ฉีดใต้ผิวหนัง)</option>
+                <option value="ID">ID (ฉีดเข้าผิวหนัง)</option>
+                <option value="Inhale">Inhale (สูดดม)</option>
+                <option value="Topical">Topical (ทาภายนอก)</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-text">⏰ Time Given (เวลาที่ให้ยา)</label>
+              <input type="time" id="med-time-given" class="form-input">
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <label class="label-text">📝 Note (หมายเหตุ)</label>
+            <textarea id="med-note" class="form-input" rows="3" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary w-full">💾 บันทึกยา</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 4: LAB RESULTS -->
+    <div id="tab-lab" class="tab-content">
+      <div class="card">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">🔬 Laboratory Results</h2>
+
+        <form id="form-lab" onsubmit="submitLab(event)">
+          <!-- วันที่และเวลาบันทึก -->
+          <div class="grid-2 mb-4">
+            <div>
+              <label class="label-text">📅 วันที่บันทึก</label>
+              <input type="date" id="lab-date" class="form-input" required>
+            </div>
+            <div>
+              <label class="label-text">⏰ เวลาบันทึก</label>
+              <input type="time" id="lab-time" class="form-input" required>
+            </div>
+          </div>
+
+          <h3 class="text-xl font-semibold mb-3 text-red-600">Complete Blood Count (CBC)</h3>
+          <div class="grid-4 mb-4">
+            <div>
+              <label class="label-text">WBC (4-10 ×10³/µL)</label>
+              <input type="number" step="0.01" id="lab-wbc" class="form-input" placeholder="7.5">
+            </div>
+            <div>
+              <label class="label-text">Neutrophil % (40-70%)</label>
+              <input type="number" step="0.01" id="lab-neutrophil" class="form-input" placeholder="60">
+            </div>
+            <div>
+              <label class="label-text">Lymphocyte % (20-40%)</label>
+              <input type="number" step="0.01" id="lab-lymphocyte" class="form-input" placeholder="30">
+            </div>
+            <div>
+              <label class="label-text">RBC (4.5-5.5 ×10⁶/µL)</label>
+              <input type="number" step="0.01" id="lab-rbc" class="form-input" placeholder="5.0">
+            </div>
+          </div>
+
+          <div class="grid-4 mb-4">
+            <div>
+              <label class="label-text">Hb (12-16 g/dL)</label>
+              <input type="number" step="0.01" id="lab-hb" class="form-input" placeholder="14">
+            </div>
+            <div>
+              <label class="label-text">Hct (37-47%)</label>
+              <input type="number" step="0.01" id="lab-hct" class="form-input" placeholder="42">
+            </div>
+            <div>
+              <label class="label-text">Platelet (150-400 ×10³/µL)</label>
+              <input type="number" step="0.01" id="lab-platelet" class="form-input" placeholder="250">
+            </div>
+            <div>
+              <label class="label-text">CRP (<5 mg/L)</label>
+              <input type="number" step="0.01" id="lab-crp" class="form-input" placeholder="2">
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-orange-600">Liver Function Test (LFT)</h3>
+          <div class="grid-4 mb-4">
+            <div>
+              <label class="label-text">Total Protein (6-8 g/dL)</label>
+              <input type="number" step="0.01" id="lab-total-protein" class="form-input" placeholder="7">
+            </div>
+            <div>
+              <label class="label-text">Albumin (3.5-5 g/dL)</label>
+              <input type="number" step="0.01" id="lab-albumin" class="form-input" placeholder="4">
+            </div>
+            <div>
+              <label class="label-text">AST (<40 U/L)</label>
+              <input type="number" step="0.01" id="lab-ast" class="form-input" placeholder="30">
+            </div>
+            <div>
+              <label class="label-text">ALT (<40 U/L)</label>
+              <input type="number" step="0.01" id="lab-alt" class="form-input" placeholder="25">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="label-text">ALP (30-120 U/L)</label>
+            <input type="number" step="0.01" id="lab-alp" class="form-input" placeholder="80">
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-blue-600">Renal Function & Electrolytes</h3>
+          <div class="grid-4 mb-4">
+            <div>
+              <label class="label-text">BUN (7-20 mg/dL)</label>
+              <input type="number" step="0.01" id="lab-bun" class="form-input" placeholder="15">
+            </div>
+            <div>
+              <label class="label-text">Creatinine (0.6-1.2 mg/dL)</label>
+              <input type="number" step="0.01" id="lab-creatinine" class="form-input" placeholder="0.9">
+            </div>
+            <div>
+              <label class="label-text">eGFR (>60 mL/min/1.73m²)</label>
+              <input type="number" step="0.01" id="lab-egfr" class="form-input" placeholder="90">
+            </div>
+            <div>
+              <label class="label-text">Na (136-145 mEq/L)</label>
+              <input type="number" step="0.01" id="lab-na" class="form-input" placeholder="140">
+            </div>
+          </div>
+
+          <div class="grid-3 mb-4">
+            <div>
+              <label class="label-text">K (3.5-5 mEq/L)</label>
+              <input type="number" step="0.01" id="lab-k" class="form-input" placeholder="4.2">
+            </div>
+            <div>
+              <label class="label-text">Cl (98-107 mEq/L)</label>
+              <input type="number" step="0.01" id="lab-cl" class="form-input" placeholder="102">
+            </div>
+            <div>
+              <label class="label-text">HCO₃ (22-28 mEq/L)</label>
+              <input type="number" step="0.01" id="lab-hco3" class="form-input" placeholder="25">
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-green-600">Vitamins & Minerals</h3>
+          <div class="grid-4 mb-4">
+            <div>
+              <label class="label-text">Vitamin D (30-100 ng/mL)</label>
+              <input type="number" step="0.01" id="lab-vitamin-d" class="form-input" placeholder="50">
+            </div>
+            <div>
+              <label class="label-text">Ca (8.5-10.5 mg/dL)</label>
+              <input type="number" step="0.01" id="lab-ca" class="form-input" placeholder="9.5">
+            </div>
+            <div>
+              <label class="label-text">Mg (1.7-2.2 mg/dL)</label>
+              <input type="number" step="0.01" id="lab-mg" class="form-input" placeholder="2.0">
+            </div>
+            <div>
+              <label class="label-text">Phosphate (2.5-4.5 mg/dL)</label>
+              <input type="number" step="0.01" id="lab-phosphate" class="form-input" placeholder="3.5">
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <h3 class="text-xl font-semibold mb-3 text-purple-600">Other Tests</h3>
+          <div class="mb-4">
+            <label class="label-text">🧪 Sputum C/S (Culture & Sensitivity)</label>
+            <input type="text" id="lab-sputum" class="form-input" placeholder="ผลตรวจ Sputum C/S">
+          </div>
+          <div class="mb-6">
+            <label class="label-text">🩻 CXR Report (Chest X-Ray)</label>
+            <textarea id="lab-cxr" class="form-input" rows="3" placeholder="รายงานผล CXR"></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary w-full">💾 บันทึกผล Lab</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 5: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content">
+      <div class="card">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">📊 Dashboard</h2>
+
+        <div class="mb-4">
+          <label class="label-text">📅 Select Time Range</label>
+          <select id="dashboard-range" class="form-input" onchange="loadDashboard()">
+            <option value="7">Last 7 days</option>
+            <option value="14">Last 2 weeks</option>
+            <option value="30">Last month</option>
+            <option value="365">All data</option>
+          </select>
+        </div>
+
+        <div class="grid-2 mb-6">
+          <div class="card bg-blue-50">
+            <h3 class="text-lg font-semibold mb-2 text-blue-800">📊 Vital Signs Trends</h3>
+            <canvas id="chart-vitals"></canvas>
+          </div>
+
+          <div class="card bg-green-50">
+            <h3 class="text-lg font-semibold mb-2 text-green-800">💧 I/O Balance</h3>
+            <canvas id="chart-io"></canvas>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-6">
+          <div class="card bg-purple-50">
+            <h3 class="text-lg font-semibold mb-2 text-purple-800">🏃 Mobility Time</h3>
+            <canvas id="chart-mobility"></canvas>
+          </div>
+
+          <div class="card bg-orange-50">
+            <h3 class="text-lg font-semibold mb-2 text-orange-800">🔬 Lab Values Trends</h3>
+            <div class="mb-2">
+              <select id="lab-trend-select" class="form-input" onchange="loadDashboard()">
+                <option value="Albumin">Albumin</option>
+                <option value="Na">Sodium (Na)</option>
+                <option value="K">Potassium (K)</option>
+                <option value="Hb">Hemoglobin (Hb)</option>
+                <option value="WBC">WBC</option>
+                <option value="Creatinine">Creatinine</option>
+              </select>
+            </div>
+            <canvas id="chart-lab"></canvas>
+          </div>
+        </div>
+
+        <button onclick="loadDashboard()" class="btn-primary w-full">🔄 Refresh Dashboard</button>
+      </div>
+    </div>
+
+    <!-- TAB 6: SUMMARY -->
+    <div id="tab-summary" class="tab-content">
+      <div class="card">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">📋 Daily Summary by Shift</h2>
+
+        <div class="grid-2 mb-4">
+          <div>
+            <label class="label-text">📅 Select Date</label>
+            <input type="date" id="summary-date" class="form-input">
+          </div>
+          <div>
+            <label class="label-text">⏰ Select Shift</label>
+            <select id="summary-shift" class="form-input">
+              <option value="morning">เวรเช้า (07:00-19:00)</option>
+              <option value="night">เวรดึก (19:00-07:00)</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="generateSummary()" class="btn-primary w-full mb-4">📊 Generate Summary</button>
+
+        <div id="summary-content" class="mt-6"></div>
+      </div>
+    </div>
+
+    <!-- TAB 7: MEDICATION LOG -->
+    <div id="tab-medlog" class="tab-content">
+      <div class="card">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">📜 Medication Log</h2>
+
+        <div class="mb-4">
+          <label class="label-text">📅 Show last</label>
+          <select id="medlog-days" class="form-input" onchange="loadMedicationLog()">
+            <option value="7">7 days</option>
+            <option value="14">14 days</option>
+            <option value="30">30 days</option>
+            <option value="365">All records</option>
+          </select>
+        </div>
+
+        <button onclick="loadMedicationLog()" class="btn-secondary w-full mb-4">🔄 Refresh</button>
+
+        <div id="medlog-content"></div>
+      </div>
+    </div>
+
+    <!-- TAB 8: LAB LOG -->
+    <div id="tab-lablog" class="tab-content">
+      <div class="card">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">📜 Lab Results Log</h2>
+
+        <div class="mb-4">
+          <label class="label-text">📅 Show last</label>
+          <select id="lablog-days" class="form-input" onchange="loadLabLog()">
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+            <option value="365">All records</option>
+          </select>
+        </div>
+
+        <button onclick="loadLabLog()" class="btn-secondary w-full mb-4">🔄 Refresh</button>
+
+        <div id="lablog-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================================
+    // GLOBAL VARIABLES
+    // ========================================
+
+    let currentTab = 'vitals';
+    let dashboardCharts = {};
+
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+
+    window.onload = function() {
+      initializeDateTimeFields();
+      showMobileInstructions();
+    };
+
+    function initializeDateTimeFields() {
+      const today = new Date().toISOString().split('T')[0];
+      const now = new Date().toTimeString().split(' ')[0].substring(0, 5);
+
+      // Set default dates and times for all forms
+      document.getElementById('vitals-date').value = today;
+      document.getElementById('vitals-time').value = now;
+      document.getElementById('activity-date').value = today;
+      document.getElementById('activity-time').value = now;
+      document.getElementById('med-date').value = today;
+      document.getElementById('med-time').value = now;
+      document.getElementById('lab-date').value = today;
+      document.getElementById('lab-time').value = now;
+      document.getElementById('summary-date').value = today;
+    }
+
+    function showMobileInstructions() {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && !localStorage.getItem('mobileInstructionsShown')) {
+        showNotification('💡 สำหรับการใช้งานบนมือถือ: เพิ่มหน้านี้ไปยัง Home Screen เพื่อประสบการณ์ที่ดีที่สุด', 'info', 5000);
+        localStorage.setItem('mobileInstructionsShown', 'true');
+      }
+    }
+
+    // ========================================
+    // TAB SWITCHING
+    // ========================================
+
+    function switchTab(tabName) {
+      // Hide all tabs
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      // Remove active class from all buttons
+      const btns = document.querySelectorAll('.tab-btn');
+      btns.forEach(btn => btn.classList.remove('active'));
+
+      // Show selected tab
+      document.getElementById('tab-' + tabName).classList.add('active');
+
+      // Highlight active button
+      event.target.classList.add('active');
+
+      currentTab = tabName;
+
+      // Load data for specific tabs
+      if (tabName === 'dashboard') {
+        loadDashboard();
+      } else if (tabName === 'medlog') {
+        loadMedicationLog();
+      } else if (tabName === 'lablog') {
+        loadLabLog();
+      }
+    }
+
+    // ========================================
+    // NOTIFICATION SYSTEM
+    // ========================================
+
+    function showNotification(message, type = 'success', duration = 3000) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, duration);
+    }
+
+    // ========================================
+    // FORM SUBMISSIONS
+    // ========================================
+
+    function submitVitals(event) {
+      event.preventDefault();
+
+      const data = {
+        recordDate: document.getElementById('vitals-date').value,
+        recordTime: document.getElementById('vitals-time').value,
+        temperature: document.getElementById('vitals-temp').value,
+        heartRate: document.getElementById('vitals-hr').value,
+        respiratoryRate: document.getElementById('vitals-rr').value,
+        bpSystolic: document.getElementById('vitals-bp-sys').value,
+        bpDiastolic: document.getElementById('vitals-bp-dia').value,
+        spo2: document.getElementById('vitals-spo2').value,
+        gcs: document.getElementById('vitals-gcs').value,
+        o2Support: document.getElementById('vitals-o2support').value,
+        o2LPM: document.getElementById('vitals-o2lpm').value,
+        intake: document.getElementById('vitals-intake').value,
+        urine: document.getElementById('vitals-urine').value,
+        stool: document.getElementById('vitals-stool').value,
+        suction: document.getElementById('vitals-suction').value,
+        secretionColor: document.getElementById('vitals-secretion-color').value,
+        stoolColor: document.getElementById('vitals-stool-color').value,
+        stoolType: document.getElementById('vitals-stool-type').value,
+        rash: document.getElementById('vitals-rash').value,
+        lungSound: document.getElementById('vitals-lung-sound').value,
+        edema: document.getElementById('vitals-edema').value,
+        cyanosis: document.getElementById('vitals-cyanosis').value,
+        hypoxia: document.getElementById('vitals-hypoxia').value,
+        tryWean: document.getElementById('vitals-try-wean').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success) {
+            showNotification('✅ บันทึก Vital Signs สำเร็จ!', 'success');
+            document.getElementById('form-vitals').reset();
+            initializeDateTimeFields();
+          } else {
+            showNotification('❌ เกิดข้อผิดพลาด: ' + response.message, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showNotification('❌ เกิดข้อผิดพลาด: ' + error.message, 'error');
+        })
+        .saveDailyVitals(data);
+    }
+
+    function submitActivity(event) {
+      event.preventDefault();
+
+      const symptoms = [];
+      if (document.getElementById('symptom-fever').checked) symptoms.push('Fever');
+      if (document.getElementById('symptom-cough').checked) symptoms.push('Cough');
+      if (document.getElementById('symptom-runny-nose').checked) symptoms.push('Runny Nose');
+      if (document.getElementById('symptom-vomiting').checked) symptoms.push('Vomiting');
+      if (document.getElementById('symptom-diarrhea').checked) symptoms.push('Diarrhea');
+      if (document.getElementById('symptom-headache').checked) symptoms.push('Headache');
+      if (document.getElementById('symptom-seizure').checked) symptoms.push('Seizure');
+      if (document.getElementById('symptom-rash').checked) symptoms.push('Rash');
+
+      const data = {
+        recordDate: document.getElementById('activity-date').value,
+        recordTime: document.getElementById('activity-time').value,
+        pt_mobility: document.getElementById('pt-mobility').checked,
+        pt_balance: document.getElementById('pt-balance').checked,
+        pt_strength: document.getElementById('pt-strength').checked,
+        pt_gait: document.getElementById('pt-gait').checked,
+        pt_aerobic: document.getElementById('pt-aerobic').checked,
+        pt_chestPT: document.getElementById('pt-chestpt').checked,
+        ot_mouthCare: document.getElementById('ot-mouthcare').checked,
+        ot_oralMotor: document.getElementById('ot-oralmotor').checked,
+        ot_vitalStim: document.getElementById('ot-vitalstim').checked,
+        ot_speech: document.getElementById('ot-speech').checked,
+        ot_cognitive: document.getElementById('ot-cognitive').checked,
+        sittingTime: document.getElementById('activity-sitting').value,
+        standingTime: document.getElementById('activity-standing').value,
+        apneaDay: document.getElementById('activity-apnea-day').value,
+        apneaNight: document.getElementById('activity-apnea-night').value,
+        sleepDay: document.getElementById('activity-sleep-day').value,
+        sleepNight: document.getElementById('activity-sleep-night').value,
+        agitation: document.getElementById('activity-agitation').value,
+        delirium: document.getElementById('activity-delirium').value,
+        symptoms: symptoms.join(', '),
+        prnMedication: document.getElementById('activity-prn').value,
+        chiefComplaint: document.getElementById('activity-complaint').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success) {
+            showNotification('✅ บันทึก Activity สำเร็จ!', 'success');
+            document.getElementById('form-activity').reset();
+            initializeDateTimeFields();
+          } else {
+            showNotification('❌ เกิดข้อผิดพลาด: ' + response.message, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showNotification('❌ เกิดข้อผิดพลาด: ' + error.message, 'error');
+        })
+        .saveDailyActivity(data);
+    }
+
+    function submitMedication(event) {
+      event.preventDefault();
+
+      const data = {
+        recordDate: document.getElementById('med-date').value,
+        recordTime: document.getElementById('med-time').value,
+        drugName: document.getElementById('med-drug-name').value,
+        dose: document.getElementById('med-dose').value,
+        frequency: document.getElementById('med-frequency').value,
+        route: document.getElementById('med-route').value,
+        timeGiven: document.getElementById('med-time-given').value,
+        note: document.getElementById('med-note').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success) {
+            showNotification('✅ บันทึกยาสำเร็จ!', 'success');
+            document.getElementById('form-medication').reset();
+            initializeDateTimeFields();
+          } else {
+            showNotification('❌ เกิดข้อผิดพลาด: ' + response.message, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showNotification('❌ เกิดข้อผิดพลาด: ' + error.message, 'error');
+        })
+        .saveMedication(data);
+    }
+
+    function submitLab(event) {
+      event.preventDefault();
+
+      const data = {
+        recordDate: document.getElementById('lab-date').value,
+        recordTime: document.getElementById('lab-time').value,
+        wbc: document.getElementById('lab-wbc').value,
+        neutrophil: document.getElementById('lab-neutrophil').value,
+        lymphocyte: document.getElementById('lab-lymphocyte').value,
+        rbc: document.getElementById('lab-rbc').value,
+        hb: document.getElementById('lab-hb').value,
+        hct: document.getElementById('lab-hct').value,
+        platelet: document.getElementById('lab-platelet').value,
+        crp: document.getElementById('lab-crp').value,
+        totalProtein: document.getElementById('lab-total-protein').value,
+        albumin: document.getElementById('lab-albumin').value,
+        ast: document.getElementById('lab-ast').value,
+        alt: document.getElementById('lab-alt').value,
+        alp: document.getElementById('lab-alp').value,
+        bun: document.getElementById('lab-bun').value,
+        creatinine: document.getElementById('lab-creatinine').value,
+        egfr: document.getElementById('lab-egfr').value,
+        na: document.getElementById('lab-na').value,
+        k: document.getElementById('lab-k').value,
+        cl: document.getElementById('lab-cl').value,
+        hco3: document.getElementById('lab-hco3').value,
+        vitaminD: document.getElementById('lab-vitamin-d').value,
+        ca: document.getElementById('lab-ca').value,
+        mg: document.getElementById('lab-mg').value,
+        phosphate: document.getElementById('lab-phosphate').value,
+        sputumCS: document.getElementById('lab-sputum').value,
+        cxr: document.getElementById('lab-cxr').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success) {
+            showNotification('✅ บันทึกผล Lab สำเร็จ!', 'success');
+            document.getElementById('form-lab').reset();
+            initializeDateTimeFields();
+          } else {
+            showNotification('❌ เกิดข้อผิดพลาด: ' + response.message, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showNotification('❌ เกิดข้อผิดพลาด: ' + error.message, 'error');
+        })
+        .saveLabResults(data);
+    }
+
+    // ========================================
+    // DASHBOARD
+    // ========================================
+
+    function loadDashboard() {
+      const days = parseInt(document.getElementById('dashboard-range').value);
+      const labType = document.getElementById('lab-trend-select').value;
+
+      showNotification('📊 กำลังโหลดข้อมูล Dashboard...', 'info', 2000);
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          renderVitalsChart(data.vitals);
+          renderIOChart(data.vitals);
+          renderMobilityChart(data.activity);
+          renderLabChart(data.labs, labType);
+          showNotification('✅ โหลด Dashboard สำเร็จ!', 'success');
+        })
+        .withFailureHandler(function(error) {
+          showNotification('❌ ไม่สามารถโหลด Dashboard: ' + error.message, 'error');
+        })
+        .getDashboardData(days);
+    }
+
+    function renderVitalsChart(data) {
+      const ctx = document.getElementById('chart-vitals');
+      if (!ctx) return;
+
+      // Destroy existing chart
+      if (dashboardCharts.vitals) {
+        dashboardCharts.vitals.destroy();
+      }
+
+      // Prepare data
+      const dates = data.map(d => new Date(d.RecordDate).toLocaleDateString('th-TH'));
+      const temps = data.map(d => parseFloat(d.Temperature) || null);
+      const hrs = data.map(d => parseFloat(d.HeartRate) || null);
+      const spo2s = data.map(d => parseFloat(d.SpO2) || null);
+
+      dashboardCharts.vitals = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Temperature (°C)',
+            data: temps,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            yAxisID: 'y-temp',
+            tension: 0.4
+          }, {
+            label: 'Heart Rate (bpm)',
+            data: hrs,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            yAxisID: 'y-hr',
+            tension: 0.4
+          }, {
+            label: 'SpO₂ (%)',
+            data: spo2s,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            yAxisID: 'y-spo2',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          scales: {
+            'y-temp': {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: 'Temp (°C)' }
+            },
+            'y-hr': {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: 'HR (bpm)' },
+              grid: { drawOnChartArea: false }
+            },
+            'y-spo2': {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: 'SpO₂ (%)' },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      });
+    }
+
+    function renderIOChart(data) {
+      const ctx = document.getElementById('chart-io');
+      if (!ctx) return;
+
+      if (dashboardCharts.io) {
+        dashboardCharts.io.destroy();
+      }
+
+      // Group by date
+      const groupedData = {};
+      data.forEach(d => {
+        const date = new Date(d.RecordDate).toLocaleDateString('th-TH');
+        if (!groupedData[date]) {
+          groupedData[date] = { intake: 0, output: 0 };
+        }
+        groupedData[date].intake += parseFloat(d.Intake) || 0;
+        groupedData[date].output += (parseFloat(d.Urine) || 0) + (parseFloat(d.Stool) || 0) + (parseFloat(d.Suction) || 0);
+      });
+
+      const dates = Object.keys(groupedData);
+      const intakes = dates.map(d => groupedData[d].intake);
+      const outputs = dates.map(d => groupedData[d].output);
+      const balances = dates.map(d => groupedData[d].intake - groupedData[d].output);
+
+      dashboardCharts.io = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Intake (ml)',
+            data: intakes,
+            backgroundColor: '#3b82f6',
+            yAxisID: 'y'
+          }, {
+            label: 'Output (ml)',
+            data: outputs,
+            backgroundColor: '#ef4444',
+            yAxisID: 'y'
+          }, {
+            label: 'Balance (ml)',
+            data: balances,
+            type: 'line',
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            yAxisID: 'y',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Volume (ml)' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderMobilityChart(data) {
+      const ctx = document.getElementById('chart-mobility');
+      if (!ctx) return;
+
+      if (dashboardCharts.mobility) {
+        dashboardCharts.mobility.destroy();
+      }
+
+      // Group by date
+      const groupedData = {};
+      data.forEach(d => {
+        const date = new Date(d.RecordDate).toLocaleDateString('th-TH');
+        if (!groupedData[date]) {
+          groupedData[date] = { sitting: 0, standing: 0 };
+        }
+        groupedData[date].sitting += parseFloat(d.SittingTime) || 0;
+        groupedData[date].standing += parseFloat(d.StandingTime) || 0;
+      });
+
+      const dates = Object.keys(groupedData);
+      const sittings = dates.map(d => groupedData[d].sitting);
+      const standings = dates.map(d => groupedData[d].standing);
+
+      dashboardCharts.mobility = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Sitting (min)',
+            data: sittings,
+            backgroundColor: '#8b5cf6'
+          }, {
+            label: 'Standing (min)',
+            data: standings,
+            backgroundColor: '#ec4899'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Time (minutes)' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderLabChart(data, labType) {
+      const ctx = document.getElementById('chart-lab');
+      if (!ctx) return;
+
+      if (dashboardCharts.lab) {
+        dashboardCharts.lab.destroy();
+      }
+
+      const dates = data.map(d => new Date(d.RecordDate).toLocaleDateString('th-TH'));
+      const values = data.map(d => parseFloat(d[labType]) || null);
+
+      dashboardCharts.lab = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: labType,
+            data: values,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: false,
+              title: { display: true, text: labType + ' Value' }
+            }
+          }
+        }
+      });
+    }
+
+    // ========================================
+    // SUMMARY
+    // ========================================
+
+    function generateSummary() {
+      const date = document.getElementById('summary-date').value;
+      const shift = document.getElementById('summary-shift').value;
+
+      if (!date) {
+        showNotification('⚠️ กรุณาเลือกวันที่', 'error');
+        return;
+      }
+
+      showNotification('📊 กำลังสร้าง Summary...', 'info', 2000);
+
+      google.script.run
+        .withSuccessHandler(function(summary) {
+          displaySummary(summary);
+          showNotification('✅ สร้าง Summary สำเร็จ!', 'success');
+        })
+        .withFailureHandler(function(error) {
+          showNotification('❌ ไม่สามารถสร้าง Summary: ' + error.message, 'error');
+        })
+        .getSummary(date, shift);
+    }
+
+    function displaySummary(summary) {
+      const container = document.getElementById('summary-content');
+
+      let html = `
+        <div class="card bg-gradient-to-r from-blue-50 to-purple-50">
+          <h3 class="text-2xl font-bold text-center mb-4 text-purple-800">
+            📋 ${summary.shift}
+          </h3>
+          <p class="text-center text-gray-600 mb-6">
+            วันที่: ${new Date(summary.date).toLocaleDateString('th-TH')} |
+            ผู้ป่วย: ${summary.patientName} (HN: ${summary.hn})
+          </p>
+
+          <!-- Record Count -->
+          <div class="grid-3 mb-6">
+            <div class="stat-card">
+              <div class="stat-value">${summary.recordCount.vitals}</div>
+              <div class="stat-label">💉 Vital Signs Records</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${summary.recordCount.activity}</div>
+              <div class="stat-label">🏃 Activity Records</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${summary.recordCount.medications}</div>
+              <div class="stat-label">💊 Medications Given</div>
+            </div>
+          </div>
+
+          <!-- Vital Signs Stats -->
+          <h4 class="text-xl font-semibold mb-3 text-blue-600">💉 Vital Signs Statistics</h4>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-blue-100">
+                  <th class="p-2 border">Parameter</th>
+                  <th class="p-2 border">Average</th>
+                  <th class="p-2 border">Max</th>
+                  <th class="p-2 border">Min</th>
+                  <th class="p-2 border">Latest</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${generateVitalStatsRows(summary.vitalStats)}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- I/O Balance -->
+          <h4 class="text-xl font-semibold mb-3 text-green-600">💧 I/O Balance</h4>
+          <div class="grid-2 mb-6">
+            <div class="card bg-blue-50">
+              <h5 class="font-semibold mb-2">Intake</h5>
+              <p class="text-3xl font-bold text-blue-600">${summary.ioBalance.intake} ml</p>
+            </div>
+            <div class="card bg-red-50">
+              <h5 class="font-semibold mb-2">Output</h5>
+              <p class="text-3xl font-bold text-red-600">${summary.ioBalance.output.total} ml</p>
+              <div class="text-sm mt-2">
+                <p>💦 Urine: ${summary.ioBalance.output.urine} ml</p>
+                <p>💩 Stool: ${summary.ioBalance.output.stool} ml</p>
+                <p>🧪 Suction: ${summary.ioBalance.output.suction} ml</p>
+              </div>
+            </div>
+          </div>
+          <div class="card ${summary.ioBalance.balance >= 0 ? 'bg-green-50' : 'bg-orange-50'} mb-6">
+            <h5 class="font-semibold mb-2">Balance</h5>
+            <p class="text-3xl font-bold ${summary.ioBalance.balance >= 0 ? 'text-green-600' : 'text-orange-600'}">
+              ${summary.ioBalance.balance > 0 ? '+' : ''}${summary.ioBalance.balance} ml
+            </p>
+          </div>
+
+          <!-- Stool Details -->
+          ${summary.ioBalance.stool.count > 0 ? `
+          <div class="card bg-yellow-50 mb-6">
+            <h5 class="font-semibold mb-2">💩 Stool Details</h5>
+            <p>จำนวนครั้ง: ${summary.ioBalance.stool.count} ครั้ง</p>
+            <p>สี: ${summary.ioBalance.stool.colors.join(', ') || 'ไม่ระบุ'}</p>
+            <p>Bristol Type: ${summary.ioBalance.stool.types.join(', ') || 'ไม่ระบุ'}</p>
+          </div>
+          ` : ''}
+
+          <!-- Secretion Colors -->
+          ${summary.ioBalance.secretionColors.length > 0 ? `
+          <div class="card bg-purple-50 mb-6">
+            <h5 class="font-semibold mb-2">🎨 Secretion Colors</h5>
+            <p>${summary.ioBalance.secretionColors.join(', ')}</p>
+          </div>
+          ` : ''}
+
+          <!-- Activity Summary -->
+          <h4 class="text-xl font-semibold mb-3 text-purple-600">🏃 Activity Summary</h4>
+          <div class="grid-2 mb-4">
+            <div class="card bg-indigo-50">
+              <h5 class="font-semibold mb-2">Mobility</h5>
+              <p>🪑 Sitting: ${summary.activitySummary.mobility.sitting} นาที</p>
+              <p>🧍 Standing: ${summary.activitySummary.mobility.standing} นาที</p>
+            </div>
+            <div class="card bg-pink-50">
+              <h5 class="font-semibold mb-2">Sleep & Apnea</h5>
+              <p>☀️ Apnea Day: ${summary.activitySummary.sleep.apneaDay} ครั้ง</p>
+              <p>🌙 Apnea Night: ${summary.activitySummary.sleep.apneaNight} ครั้ง</p>
+              <p>☀️ Sleep Day: ${summary.activitySummary.sleep.sleepDay} ชม.</p>
+              <p>🌙 Sleep Night: ${summary.activitySummary.sleep.sleepNight} ชม.</p>
+            </div>
+          </div>
+
+          ${summary.activitySummary.ptActivities.length > 0 ? `
+          <div class="card bg-blue-50 mb-4">
+            <h5 class="font-semibold mb-2">🏃 PT Activities</h5>
+            <p>${summary.activitySummary.ptActivities.join(', ')}</p>
+          </div>
+          ` : ''}
+
+          ${summary.activitySummary.otActivities.length > 0 ? `
+          <div class="card bg-green-50 mb-4">
+            <h5 class="font-semibold mb-2">🗣️ OT Activities</h5>
+            <p>${summary.activitySummary.otActivities.join(', ')}</p>
+          </div>
+          ` : ''}
+
+          ${summary.activitySummary.symptoms.length > 0 ? `
+          <div class="card bg-orange-50 mb-4">
+            <h5 class="font-semibold mb-2">🩺 Symptoms</h5>
+            <p>${summary.activitySummary.symptoms.join(', ')}</p>
+          </div>
+          ` : ''}
+
+          ${summary.activitySummary.prnMedications.length > 0 ? `
+          <div class="card bg-red-50 mb-4">
+            <h5 class="font-semibold mb-2">💊 PRN Medications</h5>
+            <p>${summary.activitySummary.prnMedications.join(', ')}</p>
+          </div>
+          ` : ''}
+
+          ${summary.activitySummary.chiefComplaints.length > 0 ? `
+          <div class="card bg-yellow-50 mb-6">
+            <h5 class="font-semibold mb-2">📝 Chief Complaints</h5>
+            <p>${summary.activitySummary.chiefComplaints.join(', ')}</p>
+          </div>
+          ` : ''}
+
+          <!-- Medications -->
+          ${summary.medications.length > 0 ? `
+          <h4 class="text-xl font-semibold mb-3 text-pink-600">💊 Medications Given</h4>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-pink-100">
+                  <th class="p-2 border">Drug</th>
+                  <th class="p-2 border">Dose</th>
+                  <th class="p-2 border">Frequency</th>
+                  <th class="p-2 border">Route</th>
+                  <th class="p-2 border">Time</th>
+                  <th class="p-2 border">Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${summary.medications.map(med => `
+                  <tr>
+                    <td class="p-2 border">${med.drug}</td>
+                    <td class="p-2 border">${med.dose}</td>
+                    <td class="p-2 border">${med.frequency}</td>
+                    <td class="p-2 border">${med.route}</td>
+                    <td class="p-2 border">${med.timeGiven || '-'}</td>
+                    <td class="p-2 border">${med.note || '-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+
+          <button onclick="exportSummary()" class="btn-secondary w-full">📋 Copy Summary to Clipboard</button>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function generateVitalStatsRows(stats) {
+      const params = [
+        { key: 'temperature', label: 'Temperature (°C)' },
+        { key: 'heartRate', label: 'Heart Rate (bpm)' },
+        { key: 'respiratoryRate', label: 'Respiratory Rate (/min)' },
+        { key: 'spo2', label: 'SpO₂ (%)' },
+        { key: 'bpSystolic', label: 'BP Systolic (mmHg)' },
+        { key: 'bpDiastolic', label: 'BP Diastolic (mmHg)' },
+        { key: 'gcs', label: 'GCS' }
+      ];
+
+      return params.map(param => {
+        const data = stats[param.key] || { avg: '-', max: '-', min: '-', latest: '-' };
+        return `
+          <tr>
+            <td class="p-2 border font-semibold">${param.label}</td>
+            <td class="p-2 border">${data.avg}</td>
+            <td class="p-2 border">${data.max}</td>
+            <td class="p-2 border">${data.min}</td>
+            <td class="p-2 border">${data.latest}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function exportSummary() {
+      const summaryElement = document.getElementById('summary-content');
+      if (!summaryElement) {
+        showNotification('❌ ไม่พบข้อมูล Summary', 'error');
+        return;
+      }
+
+      // Extract text content
+      const text = summaryElement.innerText;
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(text).then(function() {
+        showNotification('✅ คัดลอก Summary ไปยัง Clipboard สำเร็จ!', 'success');
+      }, function(err) {
+        showNotification('❌ ไม่สามารถคัดลอก: ' + err, 'error');
+      });
+    }
+
+    // ========================================
+    // MEDICATION LOG
+    // ========================================
+
+    function loadMedicationLog() {
+      const days = parseInt(document.getElementById('medlog-days').value);
+
+      showNotification('📜 กำลังโหลด Medication Log...', 'info', 2000);
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          displayMedicationLog(data);
+          showNotification('✅ โหลด Medication Log สำเร็จ!', 'success');
+        })
+        .withFailureHandler(function(error) {
+          showNotification('❌ ไม่สามารถโหลด: ' + error.message, 'error');
+        })
+        .getMedications(days);
+    }
+
+    function displayMedicationLog(data) {
+      const container = document.getElementById('medlog-content');
+
+      if (data.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500">ไม่พบข้อมูล</p>';
+        return;
+      }
+
+      let html = `
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-purple-100">
+                <th class="p-2 border">Date/Time</th>
+                <th class="p-2 border">Patient</th>
+                <th class="p-2 border">Drug</th>
+                <th class="p-2 border">Dose</th>
+                <th class="p-2 border">Frequency</th>
+                <th class="p-2 border">Route</th>
+                <th class="p-2 border">Time Given</th>
+                <th class="p-2 border">Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(item => `
+                <tr>
+                  <td class="p-2 border">${new Date(item.RecordDate).toLocaleDateString('th-TH')} ${item.RecordTime}</td>
+                  <td class="p-2 border">${item.PatientName}<br><small>${item.HN}</small></td>
+                  <td class="p-2 border font-semibold">${item.DrugName}</td>
+                  <td class="p-2 border">${item.Dose}</td>
+                  <td class="p-2 border">${item.Frequency}</td>
+                  <td class="p-2 border">${item.Route}</td>
+                  <td class="p-2 border">${item.TimeGiven || '-'}</td>
+                  <td class="p-2 border">${item.Note || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // ========================================
+    // LAB LOG
+    // ========================================
+
+    function loadLabLog() {
+      const days = parseInt(document.getElementById('lablog-days').value);
+
+      showNotification('📜 กำลังโหลด Lab Log...', 'info', 2000);
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          displayLabLog(data);
+          showNotification('✅ โหลด Lab Log สำเร็จ!', 'success');
+        })
+        .withFailureHandler(function(error) {
+          showNotification('❌ ไม่สามารถโหลด: ' + error.message, 'error');
+        })
+        .getLabResults(days);
+    }
+
+    function displayLabLog(data) {
+      const container = document.getElementById('lablog-content');
+
+      if (data.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500">ไม่พบข้อมูล</p>';
+        return;
+      }
+
+      let html = data.map(item => `
+        <div class="card bg-gradient-to-r from-blue-50 to-green-50 mb-4">
+          <div class="flex justify-between items-center mb-4">
+            <h4 class="text-xl font-bold text-blue-800">
+              🔬 Lab Results - ${new Date(item.RecordDate).toLocaleDateString('th-TH')}
+            </h4>
+            <span class="text-sm text-gray-600">${item.RecordTime}</span>
+          </div>
+
+          <div class="grid-4 mb-4">
+            ${item.WBC ? `<div><span class="font-semibold">WBC:</span> ${parseFloat(item.WBC).toFixed(2)}</div>` : ''}
+            ${item.Hb ? `<div><span class="font-semibold">Hb:</span> ${parseFloat(item.Hb).toFixed(2)}</div>` : ''}
+            ${item.Platelet ? `<div><span class="font-semibold">Platelet:</span> ${parseFloat(item.Platelet).toFixed(2)}</div>` : ''}
+            ${item.CRP ? `<div><span class="font-semibold">CRP:</span> ${parseFloat(item.CRP).toFixed(2)}</div>` : ''}
+            ${item.Albumin ? `<div><span class="font-semibold">Albumin:</span> ${parseFloat(item.Albumin).toFixed(2)}</div>` : ''}
+            ${item.AST ? `<div><span class="font-semibold">AST:</span> ${parseFloat(item.AST).toFixed(2)}</div>` : ''}
+            ${item.ALT ? `<div><span class="font-semibold">ALT:</span> ${parseFloat(item.ALT).toFixed(2)}</div>` : ''}
+            ${item.BUN ? `<div><span class="font-semibold">BUN:</span> ${parseFloat(item.BUN).toFixed(2)}</div>` : ''}
+            ${item.Creatinine ? `<div><span class="font-semibold">Creatinine:</span> ${parseFloat(item.Creatinine).toFixed(2)}</div>` : ''}
+            ${item.Na ? `<div><span class="font-semibold">Na:</span> ${parseFloat(item.Na).toFixed(2)}</div>` : ''}
+            ${item.K ? `<div><span class="font-semibold">K:</span> ${parseFloat(item.K).toFixed(2)}</div>` : ''}
+            ${item.Ca ? `<div><span class="font-semibold">Ca:</span> ${parseFloat(item.Ca).toFixed(2)}</div>` : ''}
+          </div>
+
+          ${item.SputumCS ? `
+          <div class="card bg-yellow-50 mb-2">
+            <h5 class="font-semibold mb-1">🧪 Sputum C/S</h5>
+            <p>${item.SputumCS}</p>
+          </div>
+          ` : ''}
+
+          ${item.CXR ? `
+          <div class="card bg-purple-50">
+            <h5 class="font-semibold mb-1">🩻 CXR Report</h5>
+            <p>${item.CXR}</p>
+          </div>
+          ` : ''}
+        </div>
+      `).join('');
+
+      container.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
