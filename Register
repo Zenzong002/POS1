@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient B1 - Register</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <?!= include('Stylesheet'); ?>
+
+  <style>
+    body {
+      background-image: linear-gradient(to br, var(--color-bg-from), var(--color-bg-to));
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+  <div class="w-full max-w-md">
+
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl shadow-lg mb-4">
+        <span class="text-5xl">🏥</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-gray-800">
+        Create Account
+      </h1>
+      <p class="text-lg text-gray-600 mt-1">Register new user for Patient B1 System</p>
+    </div>
+
+    <form id="register-form" class="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+
+      <div>
+        <label for="email" class="form-label text-primary-700">Email</label>
+        <input type="email" id="email" class="form-input" placeholder="user@example.com" required>
+      </div>
+
+      <div>
+        <label for="password" class="form-label text-primary-700">Password</label>
+        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+      </div>
+
+      <div>
+        <label for="confirm-password" class="form-label text-primary-700">Confirm Password</label>
+        <input type="password" id="confirm-password" class="form-input" placeholder="••••••••" required>
+      </div>
+
+      <div id="message-area" class="text-sm font-medium text-center" style="display: none;"></div>
+
+      <div>
+        <button type="submit" id="register-button" class="submit-button w-full">
+          <span id="register-text">Register</span>
+        </button>
+      </div>
+
+      <div class="text-center">
+        <a href="<?!= ScriptApp.getService().getUrl(); ?>" class="text-sm font-medium text-secondary-600 hover:text-secondary-500">
+          &larr; Back to Login
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+<script>
+  document.getElementById('register-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+    const messageArea = document.getElementById('message-area');
+    const button = document.getElementById('register-button');
+    const buttonText = document.getElementById('register-text'); // Get the span inside button
+
+    const email = emailInput.value;
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+
+    // --- Input Validation ---
+    if (!email || !password || !confirmPassword) {
+      messageArea.innerText = 'Please fill in all fields.';
+      messageArea.className = 'text-red-600 text-sm font-medium text-center';
+      messageArea.style.display = 'block';
+      return;
+    }
+    if (password !== confirmPassword) {
+      messageArea.innerText = 'Passwords do not match!';
+      messageArea.className = 'text-red-600 text-sm font-medium text-center';
+      messageArea.style.display = 'block';
+      return;
+    }
+    // Basic password strength (optional but recommended)
+    if (password.length < 6) {
+        messageArea.innerText = 'Password must be at least 6 characters long.';
+        messageArea.className = 'text-red-600 text-sm font-medium text-center';
+        messageArea.style.display = 'block';
+        return;
+    }
+    // --- End Validation ---
+
+    button.disabled = true;
+    buttonText.innerText = 'Registering...'; // Update text inside span
+    messageArea.style.display = 'none';
+
+    const credentials = { email: email, password: password };
+
+    // Call registerUser in Code.gs (U ใหญ่)
+    google.script.run
+      .withSuccessHandler(onRegisterSuccess)
+      .withFailureHandler(onRegisterFailure)
+      .registerUser(credentials);
+  });
+
+  function onRegisterSuccess(responseJson) {
+    const response = JSON.parse(responseJson);
+    const messageArea = document.getElementById('message-area');
+    const button = document.getElementById('register-button');
+    const buttonText = document.getElementById('register-text');
+
+    if (response.success) {
+      messageArea.innerText = 'Registration successful! You can now log in.';
+      messageArea.className = 'text-green-600 text-sm font-medium text-center';
+      document.getElementById('register-form').reset(); // Clear form on success
+    } else {
+      // Use the error message from the server
+      messageArea.innerText = response.message || 'An unknown error occurred.';
+      messageArea.className = 'text-red-600 text-sm font-medium text-center';
+    }
+    messageArea.style.display = 'block';
+    button.disabled = false;
+    buttonText.innerText = 'Register'; // Reset button text
+  }
+
+  function onRegisterFailure(error) {
+    const messageArea = document.getElementById('message-area');
+    const button = document.getElementById('register-button');
+    const buttonText = document.getElementById('register-text');
+
+    // Display a user-friendly message, log the actual error
+    messageArea.innerText = 'Registration failed. Please try again later. (' + error.message + ')';
+    messageArea.className = 'text-red-600 text-sm font-medium text-center';
+    messageArea.style.display = 'block';
+    button.disabled = false;
+    buttonText.innerText = 'Register'; // Reset button text
+
+    // Log the detailed error to the browser console for debugging
+    console.error("Registration Failure:", error);
+  }
+</script>
+
+</body>
+</html>
