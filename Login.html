@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient B1 - Login</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <?!= include('Stylesheet'); ?>
+  
+  <style>
+    /* ใช้ธีมสีหลักสำหรับพื้นหลัง */
+    body {
+      background-image: linear-gradient(to br, var(--color-bg-from), var(--color-bg-to));
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+  <div class="w-full max-w-md">
+    
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl shadow-lg mb-4">
+        <span class="text-5xl">🏥</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-gray-800">
+        Patient B1 System
+      </h1>
+      <p class="text-lg text-gray-600 mt-1">Please sign in to continue</p>
+    </div>
+
+    <form id="login-form" class="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+      
+      <div>
+        <label for="email" class="form-label flex items-center gap-2 text-primary-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206"/></svg>
+          Email
+        </label>
+        <input type="email" id="email" name="email" class="form-input" placeholder="user@example.com" required>
+      </div>
+      
+      <div>
+        <label for="password" class="form-label flex items-center gap-2 text-primary-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Password
+        </label>
+        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+      </div>
+      
+      <div id="error-message" class="text-red-600 text-sm font-medium text-center" style="display: none;"></div>
+      
+      <div>
+        <button type="submit" id="login-button" class="submit-button w-full flex items-center justify-center gap-2">
+          <svg id="login-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+          <svg id="login-loader" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" style="display: none;">
+             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span id="login-text">Login</span>
+        </button>
+      </div>
+
+    </form> <div class="text-center text-sm mt-6">
+      <p class="text-gray-600">
+        Don't have an account?
+        <a href="<?!= ScriptApp.getService().getUrl(); ?>?page=register" class="font-medium text-secondary-600 hover:text-secondary-500">
+          Register here
+        </a>
+      </p>
+    </div>
+    <p class="text-center text-gray-600 text-sm mt-6">
+      © 2024 Healthcare System.
+    </p>
+  </div>
+  
+<script>
+  document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // แสดง Loader
+    document.getElementById('login-text').innerText = 'Signing In...';
+    document.getElementById('login-icon').style.display = 'none';
+    document.getElementById('login-loader').style.display = 'block';
+    document.getElementById('login-button').disabled = true;
+    document.getElementById('error-message').style.display = 'none';
+
+    const credentials = {
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    };
+
+    google.script.run
+      .withSuccessHandler(onLoginSuccess)
+      .withFailureHandler(onLoginFailure)
+      .login(credentials);
+  });
+
+  function onLoginSuccess(responseJson) {
+    const response = JSON.parse(responseJson);
+    
+    if (response.success) {
+      // เก็บ Token ใน localStorage
+      localStorage.setItem('sessionToken', response.token);
+      
+      // NEW: เก็บ Token ใน UserProperties ฝั่ง Server เพื่อให้ doGet เช็คได้
+      google.script.run.withSuccessHandler(() => {
+          // เปลี่ยนข้อความเป็นสำเร็จ
+          document.getElementById('login-text').innerText = 'Success!';
+          // Redirect ไปหน้าหลัก
+          window.location.href = "<?!= ScriptApp.getService().getUrl(); ?>";
+      }).setUserSessionToken(response.token); // ฟังก์ชันใหม่ที่เราต้องเพิ่มใน Code.gs
+      
+    } else {
+      onLoginFailure(new Error(response.message));
+    }
+  }
+
+  function onLoginFailure(error) {
+    // ซ่อน Loader
+    document.getElementById('login-text').innerText = 'Login';
+    document.getElementById('login-icon').style.display = 'block';
+    document.getElementById('login-loader').style.display = 'none';
+    document.getElementById('login-button').disabled = false;
+    
+    // แสดง Error
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.innerText = error.message;
+    errorDiv.style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
