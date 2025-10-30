@@ -1,0 +1,138 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">📋</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Daily Summary</h1>
+      <p class="text-primary-50 mt-2">Generate a 24-hour summary for a specific date</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-section border-l-secondary-500">
+  <p class="form-label text-secondary-700">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    Select Date to Summarize
+  </p>
+  <p class="text-sm text-gray-500 mb-4 ml-7">The summary will cover the 24-hour period (00:00 to 23:59) for the selected date.</p>
+  <div class="flex flex-wrap gap-4 items-end">
+    
+    <div>
+      <label for="summary-date-picker" class="form-label text-secondary-700">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        Select Date
+      </label>
+      <input type="date" id="summary-date-picker" class="form-input border-secondary-300 focus:border-secondary-500 focus:ring-secondary-100">
+    </div>
+ 
+    <button id="summary-btn-load" class="submit-button flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+      Load Summary
+    </button>
+    <button id="summary-btn-export" class="submit-button bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+      Export to Clipboard
+    </button>
+  </div>
+</div>
+
+<div id="summary-content-to-export" class="mt-6 space-y-6">
+  <div class="form-section bg-gradient-to-br from-rose-50 to-pink-50 border-l-4 border-rose-500">
+    <h2 class="form-title flex items-center gap-2 text-rose-700">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+      </svg>
+      Vital Signs Statistics
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-rose-200 rounded-lg overflow-hidden shadow-sm">
+        <thead class="bg-gradient-to-r from-rose-100 to-pink-100">
+          <tr>
+            <th class="p-3 border border-rose-200 text-left font-semibold text-rose-800">Parameter</th>
+            <th class="p-3 border border-rose-200 text-left font-semibold text-rose-800">Average</th>
+            <th class="p-3 border border-rose-200 text-left font-semibold text-rose-800">Maximum</th>
+            <th class="p-3 border border-rose-200 text-left font-semibold text-rose-800">Minimum</th>
+            <th class="p-3 border border-rose-200 text-left font-semibold text-rose-800">Latest</th>
+          </tr>
+        </thead>
+        <tbody id="summary-vitals-body">
+          <tr><td colspan="5" class="p-4 text-center text-gray-500 bg-rose-50">Please select a date and load summary.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="form-section bg-gradient-to-br from-cyan-50 to-blue-50 border-l-4 border-cyan-500">
+      <h2 class="form-title flex items-center gap-2 text-cyan-700">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>
+        </svg>
+        I/O Balance Summary
+      </h2>
+      <table class="w-full bg-white border border-cyan-200 rounded-lg overflow-hidden shadow-sm">
+        <tbody id="summary-io-body">
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="form-section bg-gradient-to-br from-violet-50 to-purple-50 border-l-4 border-violet-500">
+      <h2 class="form-title flex items-center gap-2 text-violet-700">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Clinical Summary
+      </h2>
+      <ul id="summary-clinical" class="list-disc list-inside space-y-1 text-violet-900">
+      </ul>
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="form-section bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-amber-500">
+      <h2 class="form-title flex items-center gap-2 text-amber-700">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        Activity Summary
+      </h2>
+      <ul id="summary-activity" class="list-disc list-inside space-y-1 text-amber-900">
+      </ul>
+    </div>
+    
+    <div class="form-section bg-gradient-to-br from-fuchsia-50 to-pink-50 border-l-4 border-fuchsia-500">
+      <h2 class="form-title flex items-center gap-2 text-fuchsia-700">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Behavior & Symptoms
+      </h2>
+      <ul id="summary-behavior" class="list-disc list-inside space-y-1 text-fuchsia-900">
+      </ul>
+    </div>
+  </div>
+  
+  <div class="form-section bg-gradient-to-br from-indigo-50 to-blue-50 border-l-4 border-indigo-500">
+    <h2 class="form-title flex items-center gap-2 text-indigo-700">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+      </svg>
+      Medications Given This Day
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-indigo-200 rounded-lg overflow-hidden shadow-sm">
+        <thead class="bg-gradient-to-r from-indigo-100 to-blue-100">
+           <tr>
+            <th class="p-3 border border-indigo-200 text-left font-semibold text-indigo-800">Time</th>
+            <th class="p-3 border border-indigo-200 text-left font-semibold text-indigo-800">Drug</th>
+            <th class="p-3 border border-indigo-200 text-left font-semibold text-indigo-800">Dose/Route</th>
+            <th class="p-3 border border-indigo-200 text-left font-semibold text-indigo-800">Note</th>
+          </tr>
+        </thead>
+         <tbody id="summary-meds-body">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
