@@ -1,0 +1,54 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">📁</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Document Log</h1>
+      <p class="text-primary-50 mt-2">Browse and search uploaded files</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-section border-l-secondary-500">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+    
+    <div>
+      <label for="doclog-timerange" class="form-label text-secondary-700">Time Range</label>
+      <select id="doclog-timerange" class="form-select">
+        <option value="7d">📅 Last 7 days</option>
+        <option value="14d">📅 Last 14 days</option>
+        <option value="30d">📅 Last 30 days</option>
+        <option value="all" selected>📚 All time</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="doclog-category" class="form-label text-secondary-700">Category</label>
+      <select id="doclog-category" class="form-select">
+        <option value="All">All Categories</option>
+        <option value="Lab Record">Lab Record</option>
+        <option value="Xray">Xray</option>
+        <option value="Drug">Drug</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="doclog-search" class="form-label text-secondary-700">Search</label>
+      <input type="text" id="doclog-search" class="form-input" placeholder="Search by name...">
+    </div>
+    
+    <button id="load-doclog" class="submit-button h-12">
+      Load Log
+    </button>
+  </div>
+</div>
+
+<div id="doclog-container" class="mt-6">
+  <div class="form-section bg-gray-50 border-l-gray-400">
+    <p class="text-gray-500 text-center">
+      Select filters and click "Load Log" to see results.
+    </p>
+  </div>
+</div>
