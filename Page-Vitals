@@ -1,0 +1,295 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">💉</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Record Vitals & I/O</h1>
+      <p class="text-primary-50 mt-2">Record core vital signs, intake/output, and clinical observations</p>
+    </div>
+  </div>
+</div>
+
+<form id="form-vitals">
+
+  <div class="form-section border-l-secondary-500">
+    <h2 class="form-title text-secondary-700">
+      <span class="icon-wrapper bg-gradient-to-br from-secondary-100 to-secondary-200">📅</span>
+      Record Date & Time
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="recordDateTime-vitals" class="form-label text-secondary-700">
+          <span class="text-secondary-600">🕐</span>
+          Date & Time
+        </label>
+        <input type="datetime-local" id="recordDateTime-vitals" name="RecordDateTime" class="form-input" required>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section border-l-4 border-l-red-500">
+    <h2 class="form-title text-red-700">
+      <span class="icon-wrapper bg-gradient-to-br from-red-100 to-red-200">❤️</span>
+      Vital Signs
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      
+      <div>
+        <label for="Weight" class="form-label text-gray-700">
+          <span class="text-lg">⚖️</span>
+          น้ำหนัก (kg)
+        </label>
+        <input type="number" step="0.1" id="Weight" name="Weight" class="form-input" placeholder="0.0">
+      </div>
+
+      <div>
+        <label for="Temperature" class="form-label text-red-500">
+          <span class="text-red-500">🌡️</span>
+          Temperature (°C)
+        </label>
+        <input type="number" step="0.1" id="Temperature" name="Temperature" class="form-input" placeholder="36.5">
+      </div>
+      <div>
+        <label for="BPSystolic" class="form-label text-rose-500">
+          <span class="text-rose-500">💓</span>
+          BP Systolic
+        </label>
+        <input type="number" id="BPSystolic" name="BPSystolic" class="form-input" placeholder="120">
+      </div>
+      <div>
+        <label for="BPDiastolic" class="form-label text-rose-500">
+          <span class="text-rose-500">💗</span>
+          BP Diastolic
+        </label>
+        <input type="number" id="BPDiastolic" name="BPDiastolic" class="form-input" placeholder="80">
+      </div>
+      <div>
+        <label for="HeartRate" class="form-label text-pink-500">
+          <span class="text-pink-500">💖</span>
+          Heart Rate (bpm)
+        </label>
+        <input type="number" id="HeartRate" name="HeartRate" class="form-input" placeholder="72">
+      </div>
+      <div>
+        <label for="RespiratoryRate" class="form-label text-cyan-500">
+          <span class="text-cyan-500">🫁</span>
+          Resp Rate (/min)
+        </label>
+        <input type="number" id="RespiratoryRate" name="RespiratoryRate" class="form-input" placeholder="16">
+      </div>
+      <div>
+        <label for="SpO2" class="form-label text-blue-500">
+          <span class="text-blue-500">🩺</span>
+          SpO₂ (%)
+        </label>
+        <input type="number" id="SpO2" name="SpO2" class="form-input" placeholder="98">
+      </div>
+      <div>
+        <label for="GCS" class="form-label text-purple-500">
+          <span class="text-purple-500">🧠</span>
+          GCS (3-15)
+        </label>
+        <input type="number" id="GCS" name="GCS" class="form-input" min="3" max="15" placeholder="15">
+      </div>
+    </div>
+  </div>
+  
+  <div class="form-section border-l-4 border-l-cyan-500">
+    <h2 class="form-title text-cyan-700">
+      <span class="icon-wrapper bg-gradient-to-br from-cyan-100 to-cyan-200">💨</span>
+      O₂ Support
+    </h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="O2Support" class="form-label text-cyan-600">
+          <span class="text-cyan-600">🫁</span>
+          O₂ Support Type
+        </label>
+        <select id="O2Support" name="O2Support" class="form-select">
+          <option value="Room Air">Room Air</option>
+          <option value="Nasal Cannula (NC)">Nasal Cannula (NC)</option>
+          <option value="Simple Mask">Simple Mask</option>
+          <option value="Partial Rebreather (PRM)">Partial Rebreather (PRM)</option>
+          <option value="Venturi Mask">Venturi Mask</option>
+          <option value="CPAP">CPAP</option>
+          <option value="BiPAP">BiPAP</option>
+          <option value="Mechanical (MV)">Mechanical (MV)</option>
+          <option value="HFNC">HFNC</option>
+        </select>
+      </div>
+      <div>
+        <label for="O2LPM" class="form-label text-cyan-600">
+          <span class="text-cyan-600">💨</span>
+          O₂ Flow Rate (LPM)
+        </label>
+        <input type="number" step="0.5" id="O2LPM" name="O2LPM" class="form-input" placeholder="2.0">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section border-l-4 border-l-blue-500">
+    <h2 class="form-title text-blue-700">
+      <span class="icon-wrapper bg-gradient-to-br from-blue-100 to-blue-200">💧</span>
+      Intake / Output
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <label for="Intake" class="form-label text-blue-500">
+          <span class="text-blue-500">🥤</span>
+          Intake (ml)
+        </label>
+        <input type="number" id="Intake" name="Intake" class="form-input" placeholder="1500" value="0">
+      </div>
+      <div>
+        <label for="OutputUrine" class="form-label text-amber-500">
+          <span class="text-amber-500">💧</span>
+          Urine (ml)
+        </label>
+        <input type="number" id="OutputUrine" name="OutputUrine" class="form-input" placeholder="1000" value="0">
+      </div>
+      <div>
+        <label for="OutputStool" class="form-label text-orange-600">
+          <span class="text-orange-600">💩</span>
+          Stool (ml)
+        </label>
+        <input type="number" id="OutputStool" name="OutputStool" class="form-input" placeholder="200" value="0">
+      </div>
+      <div>
+        <label for="OutputSuction" class="form-label text-purple-500">
+          <span class="text-purple-500">🩹</span>
+          Suction (ml)
+        </label>
+        <input type="number" id="OutputSuction" name="OutputSuction" class="form-input" placeholder="0" value="0">
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 p-4 bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg border border-gray-200">
+      <div>
+        <label for="SecretionColor" class="form-label text-teal-500">
+          <span class="text-teal-500">💦</span>
+          Secretion Color
+        </label>
+        <select id="SecretionColor" name="SecretionColor" class="form-select">
+          <option value="">N/A</option>
+          <option value="Clear">ใส (Clear)</option>
+          <option value="White/Cloudy">ขาวขุ่น (White/Cloudy)</option>
+          <option value="Yellow">เหลือง (Yellow)</option>
+          <option value="Green">เขียว (Green)</option>
+          <option value="Red/Bloody">แดง (Red/Bloody)</option>
+          <option value="Brown">น้ำตาล (Brown)</option>
+          <option value="Black">ดำ (Black)</option>
+        </select>
+      </div>
+      <div>
+        <label for="StoolColor" class="form-label text-orange-600">
+          <span class="text-orange-600">🎨</span>
+          Stool Color
+        </label>
+        <select id="StoolColor" name="StoolColor" class="form-select">
+          <option value="">N/A</option>
+          <option value="Brown">น้ำตาล (Normal)</option>
+          <option value="Yellow">เหลือง</option>
+          <option value="Green">เขียว</option>
+          <option value="Black">ดำ (Melena)</option>
+          <option value="Red">แดง (Fresh blood)</option>
+          <option value="Pale/Gray">ซีด/เทา</option>
+        </select>
+      </div>
+      <div>
+        <label for="StoolType" class="form-label text-orange-700">
+          <span class="text-orange-700">📊</span>
+          Stool Type (Bristol)
+        </label>
+         <select id="StoolType" name="StoolType" class="form-select">
+          <option value="">N/A</option>
+          <option value="Type 1">Type 1: ก้อนแข็งเล็กๆ</option>
+          <option value="Type 2">Type 2: ก้อนยาว ผิวขรุขระ</option>
+          <option value="Type 3">Type 3: ก้อนยาว มีรอยแตก</option>
+          <option value="Type 4">Type 4: ก้อนยาว ผิวเนียน</option>
+          <option value="Type 5">Type 5: ก้อนนุ่มๆ ขอบชัด</option>
+          <option value="Type 6">Type 6: ก้อนฟูๆ ขอบยุ่ย</option>
+          <option value="Type 7">Type 7: เหลวเป็นน้ำ</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section border-l-4 border-l-primary-500">
+    <h2 class="form-title text-primary-700">
+      <span class="icon-wrapper bg-gradient-to-br from-primary-100 to-primary-200">🔍</span>
+      Clinical Observation
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+         <label for="Rash" class="form-label text-red-400">
+          <span class="text-red-400">🩺</span>
+          Rash (ผื่น)
+        </label>
+        <select id="Rash" name="Rash" class="form-select">
+          <option value="None">ไม่มี</option>
+          <option value="Mild">Mild (น้อย)</option>
+          <option value="Moderate">Moderate (ปานกลาง)</option>
+          <option value="Severe">Severe (มาก)</option>
+        </select>
+       </div>
+      <div>
+        <label for="LungSound" class="form-label text-cyan-500">
+          <span class="text-cyan-500">🫁</span>
+          Lung Sound
+        </label>
+        <select id="LungSound" name="LungSound" class="form-select">
+          <option value="Clear">Clear (ปกติ)</option>
+          <option value="Rhonchi">Rhonchi (แหบ)</option>
+          <option value="Wheezing">Wheezing (หวีด)</option>
+          <option value="Crackles">Crackles (แตก)</option>
+          <option value="Decreased">Decreased (ลดลง)</option>
+        </select>
+      </div>
+      <div>
+        <label for="Edema" class="form-label text-blue-500">
+          <span class="text-blue-500">💧</span>
+          Edema (บวม)
+        </label>
+        <select id="Edema" name="Edema" class="form-select">
+           <option value="None">ไม่มี</option>
+          <option value="1+">1+ (เบา)</option>
+          <option value="2+">2+ (ปานกลาง)</option>
+          <option value="3+">3+ (มาก)</option>
+          <option value="4+">4+ (มากที่สุด)</option>
+        </select>
+      </div>
+      <div>
+        <label for="TryWeanMin" class="form-label text-green-500">
+          <span class="text-green-500">⏱️</span>
+           Try Wean (นาที)
+        </label>
+        <input type="number" id="TryWeanMin" name="TryWeanMin" class="form-input" placeholder="30" value="0">
+      </div>
+    </div>
+    <div class="mt-6 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border-2 border-purple-200">
+      <div class="flex items-center gap-3">
+        <input id="Cyanosis" name="Cyanosis" type="checkbox" class="form-checkbox">
+        <label for="Cyanosis" class="form-checkbox-label flex items-center gap-2 cursor-pointer">
+          <span class="text-xl">🫐</span>
+           <span class="font-semibold">Cyanosis & Hypoxia (เขียว)</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-nav-buttons">
+    <button type="button" data-page="page-home" class="nav-button form-nav-button form-nav-menu">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      Menu
+    </button>
+    <button type="submit" class="submit-button flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      Save Vitals
+      
+    </button>
+    <button type="button" data-page="page-activity" class="nav-button form-nav-button form-nav-next">
+      Next
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg> </button>
+  </div>
+</form>
