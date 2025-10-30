@@ -1,0 +1,196 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">🔬</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Record Laboratory Results</h1>
+      <p class="text-primary-50 mt-2">Enter results from lab panels (CBC, LFT, Renal, etc.)</p>
+    </div>
+  </div>
+</div>
+
+<form id="form-lab">
+
+  <div class="form-section border-l-secondary-500">
+    <h2 class="form-title text-secondary-700">
+      <span class="icon-wrapper bg-gradient-to-br from-secondary-100 to-secondary-200">📅</span>
+      Sample Date & Time
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+       <div>
+        <label for="recordDateTime-lab" class="form-label text-secondary-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Date & Time
+        </label>
+        <input type="datetime-local" id="recordDateTime-lab" name="RecordDateTime" class="form-input" value="<%= new Date().toISOString().slice(0, 16) %>" required>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // We can define a simple helper in HTML to avoid repeating styles
+    // Or just use Tailwind directly. Here we use Tailwind directly for simplicity.
+    const labInput = (name, label, unit, normal) => `
+      <div>
+        <label for="${name}" class="form-label text-sm">
+          ${label} <span class="text-gray-500 font-normal">(${unit})</span>
+          <span class="block text-xs text-blue-600 font-normal">NV: ${normal}</span>
+        </label>
+        <input type="number" step="0.01" id="${name}" name="${name}" class="form-input text-sm p-2 border-gray-300 focus:border-primary-500 focus:ring-primary-100">
+      </div>
+    `;
+  </script>
+
+  <div class="form-section border-l-4 border-l-red-500">
+    <h2 class="form-title text-red-700">
+      <span class="icon-wrapper bg-gradient-to-br from-red-100 to-red-200">🩸</span>
+      Complete Blood Count (CBC)
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="cbc-grid">
+      </div>
+    <script>
+      (function() {
+        const grid = document.getElementById('cbc-grid');
+        const fields = [
+          { name: 'WBC', label: 'WBC', unit: 'x10³/µL', normal: '4–10k' },
+          { name: 'Neutrophil', label: 'Neutrophil', unit: '%', normal: '40–75' },
+          { name: 'Lymphocyte', label: 'Lymphocyte', unit: '%', normal: '20–45' },
+          { name: 'Monocyte', label: 'Monocyte', unit: '%', normal: '2–10' },
+          { name: 'Eosinophil', label: 'Eosinophil', unit: '%', normal: '1–6' },
+          { name: 'Basophil', label: 'Basophil', unit: '%', normal: '<1' },
+          { name: 'RBC', label: 'RBC', unit: 'x10⁶/µL', normal: '4.0–5.9' },
+          { name: 'Hb', label: 'Hb', unit: 'g/dL', normal: '12–17' },
+          { name: 'Hct', label: 'Hct', unit: '%', normal: '36–50' },
+          { name: 'MCV', label: 'MCV', unit: 'fL', normal: '80–100' },
+          { name: 'MCH', label: 'MCH', unit: 'pg', normal: '27–33' },
+          { name: 'MCHC', label: 'MCHC', unit: 'g/dL', normal: '32–36' },
+          { name: 'RDW', label: 'RDW', unit: '%', normal: '11.5–14.5' },
+          { name: 'Platelet', label: 'Platelet', unit: 'x10³/µL', normal: '150–450k' }
+        ];
+        fields.forEach(f => grid.innerHTML += labInput(f.name, f.label, f.unit, f.normal));
+      })();
+    </script>
+  </div>
+  
+  <div class="form-section border-l-4 border-l-amber-600">
+    <h2 class="form-title text-amber-700">
+      <span class="icon-wrapper bg-gradient-to-br from-amber-100 to-amber-200">🧪</span>
+      Liver Function (LFT) & Protein
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="lft-grid">
+    </div>
+    <script>
+      (function() {
+        const grid = document.getElementById('lft-grid');
+        const fields = [
+          { name: 'AST', label: 'AST (SGOT)', unit: 'U/L', normal: '10–40' },
+          { name: 'ALT', label: 'ALT (SGPT)', unit: 'U/L', normal: '7–56' },
+          { name: 'ALP', label: 'ALP', unit: 'U/L', normal: '40–130' },
+          { name: 'GGT', label: 'GGT', unit: 'U/L', normal: '9–48' },
+          { name: 'TotalBilirubin', label: 'Total Bilirubin', unit: 'mg/dL', normal: '0.2–1.2' },
+          { name: 'DirectBilirubin', label: 'Direct Bilirubin', unit: 'mg/dL', normal: '0.0–0.3' },
+          { name: 'TotalProtein', label: 'Total Protein', unit: 'g/dL', normal: '6.0–8.3' },
+          { name: 'Albumin', label: 'Albumin', unit: 'g/dL', normal: '3.5–5.0' },
+          { name: 'Globulin', label: 'Globulin', unit: 'g/dL', normal: '2.0–3.5' },
+          { name: 'AG_Ratio', label: 'A/G Ratio', unit: '', normal: '1.0–2.0' }
+        ];
+        fields.forEach(f => grid.innerHTML += labInput(f.name, f.label, f.unit, f.normal));
+      })();
+    </script>
+  </div>
+  
+  <div class="form-section border-l-4 border-l-emerald-600">
+    <h2 class="form-title text-emerald-700">
+      <span class="icon-wrapper bg-gradient-to-br from-emerald-100 to-emerald-200">💧</span>
+      Renal Function & Electrolytes
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="renal-grid">
+    </div>
+    <script>
+      (function() {
+        const grid = document.getElementById('renal-grid');
+        const fields = [
+          { name: 'BUN', label: 'BUN', unit: 'mg/dL', normal: '7–20' },
+          { name: 'Creatinine', label: 'Creatinine', unit: 'mg/dL', normal: '0.6–1.3' },
+          { name: 'eGFR', label: 'eGFR', unit: 'mL/min', normal: '≥90' },
+          { name: 'UricAcid', label: 'Uric Acid', unit: 'mg/dL', normal: '2.6–7.2' },
+          { name: 'Sodium', label: 'Sodium (Na)', unit: 'mmol/L', normal: '135–145' },
+          { name: 'Potassium', label: 'Potassium (K)', unit: 'mmol/L', normal: '3.5–5.0' },
+          { name: 'Chloride', label: 'Chloride (Cl)', unit: 'mmol/L', normal: '98–106' },
+          { name: 'Bicarbonate', label: 'Bicarbonate (HCO₃)', unit: 'mmol/L', normal: '22–28' },
+          { name: 'Calcium', label: 'Calcium (Ca)', unit: 'mg/dL', normal: '8.5–10.5' },
+          { name: 'Phosphate', label: 'Phosphate (PO₄)', unit: 'mg/dL', normal: '2.5–4.5' },
+          { name: 'Magnesium', label: 'Magnesium (Mg)', unit: 'mg/dL', normal: '1.6–2.6' }
+        ];
+        fields.forEach(f => grid.innerHTML += labInput(f.name, f.label, f.unit, f.normal));
+      })();
+    </script>
+  </div>
+  
+  <div class="form-section border-l-4 border-l-orange-500">
+    <h2 class="form-title text-orange-700">
+      <span class="icon-wrapper bg-gradient-to-br from-orange-100 to-orange-200">🍊</span>
+      Vitamins & Minerals
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="vitamins-grid">
+    </div>
+    <script>
+      (function() {
+        const grid = document.getElementById('vitamins-grid');
+        const fields = [
+          { name: 'VitaminD', label: 'Vitamin D (25-OH D)', unit: 'ng/mL', normal: '30–100' },
+          { name: 'VitaminB12', label: 'Vitamin B12', unit: 'pg/mL', normal: '200–900' },
+          { name: 'Folate', label: 'Folate', unit: 'ng/mL', normal: '3–20' },
+          { name: 'Iron', label: 'Iron', unit: 'µg/dL', normal: '50–175' },
+          { name: 'Ferritin', label: 'Ferritin', unit: 'ng/mL', normal: '13–400' },
+          { name: 'TIBC', label: 'TIBC', unit: 'µg/dL', normal: '250–450' },
+          { name: 'TransferrinSat', label: 'Transferrin Sat.', unit: '%', normal: '20–50' },
+          { name: 'Zinc', label: 'Zinc', unit: 'µg/dL', normal: '60–120' },
+          { name: 'Copper', label: 'Copper', unit: 'µg/dL', normal: '70–140' }
+        ];
+        fields.forEach(f => grid.innerHTML += labInput(f.name, f.label, f.unit, f.normal));
+      })();
+    </script>
+  </div>
+  
+  <div class="form-section border-l-4 border-l-indigo-500">
+    <h2 class="form-title text-indigo-700">
+      <span class="icon-wrapper bg-gradient-to-br from-indigo-100 to-indigo-200">📎</span>
+      Other Reports
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="SputumCS" class="form-label text-indigo-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Sputum C/S Report
+        </label>
+        <textarea id="SputumCS" name="SputumCS" class="form-textarea border-indigo-300 focus:border-indigo-500 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label for="CXRReport" class="form-label text-indigo-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          CXR Report
+        </label>
+        <textarea id="CXRReport" name="CXRReport" class="form-textarea border-indigo-300 focus:border-indigo-500 focus:ring-indigo-100"></textarea>
+       </div>
+    </div>
+  </div>
+  
+  <div class="form-nav-buttons">
+    <button type="button" data-page="page-medication" class="nav-button form-nav-button form-nav-menu">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      Meds
+    </button>
+    <button type="submit" class="submit-button flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      Save Lab Results
+    </button>
+    <button type="button" data-page="page-home" class="nav-button form-nav-button form-nav-next">
+      Home
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6-4a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2z"></path></svg>
+    </button>
+  </div>
+</form>
