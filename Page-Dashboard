@@ -1,0 +1,130 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">📊</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Patient Dashboard</h1>
+      <p class="text-primary-50 mt-2">Analyze trends for vitals and lab results</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-section border-l-secondary-500">
+  <div class="flex flex-wrap gap-4 items-end">
+    <div>
+      <label for="dashboard-timerange" class="form-label text-secondary-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        Time Range
+      </label>
+      <select id="dashboard-timerange" class="form-select border-secondary-300 focus:border-secondary-500 focus:ring-secondary-100">
+        <option value="7d">📅 Last 7 days</option>
+        <option value="14d">📅 Last 14 days</option>
+        <option value="30d">📅 Last 30 days</option>
+        <option value="all">📚 All time</option>
+      </select>
+    </div>
+    <button id="load-dashboard" class="submit-button">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      Reload Dashboard
+    </button>
+  </div>
+</div>
+
+<div class="mb-4 border-b border-gray-300">
+  <nav class="flex -mb-px space-x-4" aria-label="Tabs">
+    <button id="tab-btn-vitals" data-tab="vitals" class="tab-button active group">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      <span>Vital Signs</span>
+    </button>
+    <button id="tab-btn-lab" data-tab="lab" class="tab-button group">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+      <span>Lab Trends</span>
+    </button>
+  </nav>
+</div>
+<style>
+  .tab-button {
+    @apply flex items-center gap-2 px-3 py-3 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-primary-600 hover:border-primary-500 transition-all;
+  }
+  .tab-button.active {
+    @apply text-primary-600 border-primary-500;
+  }
+  .tab-content.hidden {
+    display: none;
+  }
+</style>
+
+<div>
+  
+  <div id="tab-content-vitals" class="tab-content">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="chart-card"><h3 class="form-title text-sm text-red-700">Temperature (°C)</h3><canvas id="chart-temp"></canvas></div>
+      <div class="chart-card"><h3 class="form-title text-sm text-red-700">BP (Daily Avg)</h3><canvas id="chart-bp"></canvas></div>
+      <div class="chart-card"><h3 class="form-title text-sm text-red-700">Heart Rate (bpm)</h3><canvas id="chart-hr"></canvas></div>
+      <div class="chart-card"><h3 class="form-title text-sm text-blue-700">SpO₂ (%)</h3><canvas id="chart-spo2"></canvas></div>
+      <div class="chart-card"><h3 class="form-title text-sm text-blue-700">I/O Balance (ml)</h3><canvas id="chart-io"></canvas></div>
+      <div class="chart-card"><h3 class="form-title text-sm text-purple-700">Suction (ml)</h3><canvas id="chart-suction"></canvas></div>
+      <div class="chart-card"><h3 class="form-title text-sm text-gray-700">Body Weight (kg)</h3><canvas id="chart-bw"></canvas></div>
+      <div class="chart-card"><h3 class="form-title text-sm text-green-700">Try Wean (min)</h3><canvas id="chart-wean"></canvas></div>
+      <div class="chart-card"><h3 class="form-title text-sm text-green-700">Mobility</h3><canvas id="chart-mobility"></canvas></div>
+    </div>
+  </div>
+
+  <div id="tab-content-lab" class="tab-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <div class="chart-card">
+        <h3 class="form-title text-red-700">CBC</h3>
+        <select id="lab-select-cbc" class="form-select text-sm mb-2">
+          <option value="WBC">WBC</option>
+          <option value="Neutrophil">Neutrophil</option>
+          <option value="Lymphocyte">Lymphocyte</option>
+          <option value="RBC">RBC</option>
+          <option value="Hb">Hb</option>
+          <option value="Hct">Hct</option>
+          <option value="Platelet">Platelet</option>
+        </select>
+        <canvas id="chart-lab-cbc"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="form-title text-amber-700">LFT & Protein</h3>
+        <select id="lab-select-lft" class="form-select text-sm mb-2">
+          <option value="AST">AST (SGOT)</option>
+          <option value="ALT">ALT (SGPT)</option>
+          <option value="ALP">ALP</option>
+          <option value="TotalBilirubin">Total Bilirubin</option>
+          <option value="Albumin">Albumin</option>
+        </select>
+        <canvas id="chart-lab-lft"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="form-title text-emerald-700">Renal & Electrolytes</h3>
+        <select id="lab-select-renal" class="form-select text-sm mb-2">
+          <option value="BUN">BUN</option>
+          <option value="Creatinine">Creatinine</option>
+          <option value="eGFR">eGFR</option>
+          <option value="Sodium">Sodium (Na)</option>
+          <option value="Potassium">Potassium (K)</option>
+          <option value="Bicarbonate">Bicarbonate (HCO₃)</option>
+          <option value="Calcium">Calcium (Ca)</option>
+          <option value="Phosphate">Phosphate (PO₄)</option>
+        </select>
+        <canvas id="chart-lab-renal"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="form-title text-orange-700">Vitamins & Minerals</h3>
+        <select id="lab-select-vitamins" class="form-select text-sm mb-2">
+          <option value="VitaminD">Vitamin D</option>
+          <option value="VitaminB12">Vitamin B12</option>
+          <option value="Ferritin">Ferritin</option>
+        </select>
+        <canvas id="chart-lab-vitamins"></canvas>
+      </div>
+
+    </div>
+  </div>
+</div>
