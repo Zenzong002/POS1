@@ -1,0 +1,41 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">🧪</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Laboratory Results Log</h1>
+      <p class="text-primary-50 mt-2">View historical lab data entries</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-section border-l-secondary-500">
+  <div class="flex flex-wrap gap-4 items-end">
+    <div>
+      <label for="lablog-timerange" class="form-label text-secondary-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        Time Range
+       </label>
+      <select id="lablog-timerange" class="form-select border-secondary-300 focus:border-secondary-500 focus:ring-secondary-100">
+        <option value="7d">📅 Last 7 days</option>
+        <option value="14d">📅 Last 14 days</option>
+        <option value="30d">📅 Last 30 days</option>
+        <option value="all">📚 All time</option>
+      </select>
+    </div>
+    <button id="load-lablog" class="submit-button">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+      Load Log
+    </button>
+  </div>
+</div>
+
+<div id="lablog-container" class="mt-6">
+  <div class="form-section bg-gray-50 border-l-gray-400">
+    <p class="text-gray-500 flex items-center gap-2 justify-center">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+      Select a time range and click "Load Log" to see results.
+    </p>
+  </div>
+</div>
