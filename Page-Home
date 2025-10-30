@@ -1,0 +1,199 @@
+<div class="max-w-4xl mx-auto">
+  
+  <div class="bg-gradient-to-r from-primary-600 via-secondary-600 to-primary-700 rounded-2xl shadow-2xl p-8 mb-8 text-white relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+    
+    <div class="relative z-10">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="bg-white/20 backdrop-blur-sm p-4 rounded-2xl">
+          <span class="text-5xl">🏥</span>
+        </div>
+        <div>
+          <h1 class="text-4xl font-extrabold tracking-tight mb-2">Patient B1</h1>
+          <p class="text-xl text-primary-100 font-medium">Daily Record System</p>
+        </div>
+      </div>
+      <p class="text-lg text-secondary-50 leading-relaxed max-w-2xl">
+        Welcome to your comprehensive healthcare management dashboard.
+        Use the navigation menu to record new data or view detailed reports.
+      </p>
+    </div>
+  </div>
+
+  <div class="mb-8 p-4 bg-white rounded-xl shadow-lg border border-gray-200 text-center">
+    <h2 id="current-date-time" class="text-2xl font-bold text-secondary-700">
+      Loading...
+    </h2>
+    <p class="text-gray-500">Current Date & Time</p>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden transform hover:scale-[1.02] transition-all duration-300">
+      <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-5">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+          <span class="bg-white/20 backdrop-blur-sm p-2 rounded-lg">⚡</span>
+          Quick Actions
+        </h2>
+        <p class="text-primary-50 text-sm mt-1">Record patient data instantly</p>
+      </div>
+      
+      <div class="p-6 space-y-3">
+        <button data-page="page-vitals" class="nav-button w-full bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600 active:from-red-700 active:to-pink-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-between p-4 group">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-125 transition-transform duration-300">💉</span>
+            <span class="font-bold">Record Vitals & I/O</span>
+          </div>
+          <span class="opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</span>
+        </button>
+        
+        <button data-page="page-activity" class="nav-button w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 active:from-green-700 active:to-emerald-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-between p-4 group">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-125 transition-transform duration-300">🏃</span>
+            <span class="font-bold">Record Activity</span>
+          </div>
+          <span class="opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</span>
+        </button>
+        
+        <button data-page="page-medication" class="nav-button w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 active:from-amber-700 active:to-orange-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-between p-4 group">
+           <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-125 transition-transform duration-300">💊</span>
+            <span class="font-bold">Record Medication</span>
+          </div>
+          <span class="opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</span>
+        </button>
+
+        <button data-page="page-lab" class="nav-button w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 active:from-blue-700 active:to-cyan-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-between p-4 group">
+           <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-125 transition-transform duration-300">🔬</span>
+            <span class="font-bold">Record Lab Results</span>
+          </div>
+          <span class="opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden transform hover:scale-[1.02] transition-all duration-300">
+      <div class="bg-gradient-to-r from-secondary-500 to-secondary-600 p-5">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+          <span class="bg-white/20 backdrop-blur-sm p-2 rounded-lg">📈</span>
+          View Reports
+        </h2>
+        <p class="text-secondary-50 text-sm mt-1">Analyze patient data & trends</p>
+      </div>
+      
+      <div class="p-6 space-y-3">
+        <button data-page="page-summary" class="nav-button w-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600 active:from-indigo-700 active:to-blue-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-between p-4 group">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-125 transition-transform duration-300">📋</span>
+            <span class="font-bold">Daily Summary</span>
+          </div>
+          <span class="opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</span>
+        </button>
+        
+        <button data-page="page-dashboard" class="nav-button w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 active:from-purple-700 active:to-pink-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-between p-4 group">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-125 transition-transform duration-300">📊</span>
+            <span class="font-bold">Dashboard</span>
+          </div>
+          <span class="opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</span>
+        </button>
+        
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button data-page="page-medlog" class="nav-button bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 hover:from-blue-200 hover:to-blue-300 rounded-lg p-3 text-sm font-semibold transition-all duration-300 group">
+            <span class="text-lg group-hover:scale-125 transition-transform duration-300 block mb-1">📜</span>
+            Med Log
+          </button>
+          <button data-page="page-lablog" class="nav-button bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 hover:from-purple-200 hover:to-purple-300 rounded-lg p-3 text-sm font-semibold transition-all duration-300 group">
+            <span class="text-lg group-hover:scale-125 transition-transform duration-300 block mb-1">🧪</span>
+            Lab Log
+          </button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <div class="bg-gradient-to-br from-white to-secondary-50 rounded-2xl shadow-xl overflow-hidden border-2 border-secondary-100">
+
+    <input type="checkbox" id="mobile-guide-toggle" class="peer/guide absolute w-0 h-0 opacity-0">
+    
+    <label for="mobile-guide-toggle" class="bg-gradient-to-r from-secondary-500 to-primary-500 p-5 block cursor-pointer select-none">
+      <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+        <span class="bg-white/20 backdrop-blur-sm p-2 rounded-lg">📱</span>
+        Mobile Setup Guide
+        <span class="ml-auto text-white text-2xl transform transition-transform duration-300 peer-checked/guide:rotate-180">
+          ▼
+        </span>
+      </h2>
+      <p class="text-secondary-50 text-sm mt-1">Install as a native app on your device</p>
+    </label>
+
+    <div class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out peer-checked/guide:max-h-[500px]">
+        
+        <div class="p-6">
+            <p class="text-gray-700 mb-4 font-medium">For the best experience on your phone, follow these steps:</p>
+            
+            <ol class="space-y-4">
+              <li class="flex gap-4 items-start">
+                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-secondary-500 to-secondary-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg">1</div>
+                    <div class="flex-1 pt-1">
+                      <strong class="text-gray-800">Copy the URL</strong>
+                      <p class="text-gray-600 text-sm mt-1">From your browser's address bar</p>
+                    </div>
+                </li>
+                
+                <li class="flex gap-4 items-start">
+                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-secondary-500 to-secondary-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg">2</div>
+                    <div class="flex-1 pt-1">
+                      <strong class="text-gray-800">Open your main browser:</strong>
+                      <div class="mt-2 space-y-2">
+                        <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <span class="text-xl">🍎</span>
+                             <div>
+                                <p class="font-semibold text-gray-800 text-sm">Safari</p>
+                                <p class="text-xs text-gray-500">For iPhone/iPad</p>
+                             </div>
+                        </div>
+                        <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <span class="text-xl">🤖</span>
+                             <div>
+                                <p class="font-semibold text-gray-800 text-sm">Chrome</p>
+                                <p class="text-xs text-gray-500">For Android</p>
+                             </div>
+                        </div>
+                      </div>
+                    </div>
+                </li>
+                
+                <li class="flex gap-4 items-start">
+                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-secondary-500 to-secondary-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg">3</div>
+                    <div class="flex-1 pt-1">
+                      <strong class="text-gray-800">Paste the URL</strong>
+                      <p class="text-gray-600 text-sm mt-1">And navigate to the page</p>
+                    </div>
+                </li>
+                
+                <li class="flex gap-4 items-start">
+                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-secondary-500 to-secondary-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg">4</div>
+                    <div class="flex-1 pt-1">
+                      <strong class="text-gray-800">Add to Home Screen</strong>
+                      <p class="text-gray-600 text-sm mt-1">Use the browser's "Share" button (iOS) or "Menu" (Android) and select <strong>"Add to Home Screen"</strong></p>
+                    </div>
+                </li>
+              </ol>
+            
+             <div class="mt-6 bg-gradient-to-r from-secondary-50 to-primary-50 border-l-4 border-secondary-500 p-4 rounded-lg">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl">💡</span>
+                <div>
+                    <p class="font-semibold text-gray-800 mb-1">Pro Tip</p>
+                   <p class="text-sm text-gray-600">This will create an icon on your home screen that opens the app in full-screen mode, just like a native app!</p>
+                </div>
+              </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
