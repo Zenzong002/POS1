@@ -1,0 +1,290 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">🏃</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Record Activity & Behavior</h1>
+      <p class="text-primary-50 mt-2">Track patient activities, therapy sessions, and behavioral patterns</p>
+    </div>
+  </div>
+</div>
+
+<form id="form-activity">
+
+  <div class="form-section border-l-secondary-500">
+    <h2 class="form-title text-secondary-700">
+      <span class="icon-wrapper bg-gradient-to-br from-secondary-100 to-secondary-200">📅</span>
+      Record Date & Time
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="recordDateTime-activity" class="form-label text-secondary-700">
+          <span class="text-secondary-600">🕐</span>
+          Date & Time
+        </label>
+        <input type="datetime-local" id="recordDateTime-activity" name="RecordDateTime" class="form-input" required>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section border-l-4 border-l-primary-500">
+    <h2 class="form-title text-primary-700">
+      <span class="icon-wrapper bg-gradient-to-br from-primary-100 to-primary-200">🏋️</span>
+      Activity & Therapy
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-xl border-2 border-blue-200">
+        <h3 class="text-lg font-bold text-blue-800 mb-4 flex items-center gap-2">
+          <span class="text-2xl">💪</span>
+          Physical Therapy (PT)
+        </h3>
+        <div class="checkbox-grid">
+          <div class="checkbox-item">
+            <input id="PT_Mobility" name="PT_Mobility" type="checkbox" class="form-checkbox">
+            <label for="PT_Mobility" class="form-checkbox-label">🚶 Mobility</label>
+          </div>
+          <div class="checkbox-item">
+            <input id="PT_Balance" name="PT_Balance" type="checkbox" class="form-checkbox">
+            <label for="PT_Balance" class="form-checkbox-label">⚖️ Balance</label>
+          </div>
+          <div class="checkbox-item">
+            <input id="PT_Strength" name="PT_Strength" type="checkbox" class="form-checkbox">
+            <label for="PT_Strength" class="form-checkbox-label">💪 Strength</label>
+          </div>
+          <div class="checkbox-item">
+            <input id="PT_Gait" name="PT_Gait" type="checkbox" class="form-checkbox">
+            <label for="PT_Gait" class="form-checkbox-label">👣 Gait</label>
+          </div>
+          <div class="checkbox-item">
+            <input id="PT_Aerobic" name="PT_Aerobic" type="checkbox" class="form-checkbox">
+            <label for="PT_Aerobic" class="form-checkbox-label">🫁 Aerobic</label>
+          </div>
+          <div class="checkbox-item">
+            <input id="PT_ChestPT" name="PT_ChestPT" type="checkbox" class="form-checkbox">
+            <label for="PT_ChestPT" class="form-checkbox-label">🫀 Chest PT</label>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label for="PT_Note" class="form-label text-blue-700">PT Note</label>
+          <textarea id="PT_Note" name="PT_Note" class="form-textarea border-blue-300 focus:border-blue-500 focus:ring-blue-100" placeholder="e.g., Patient ambulated 10m with walker..."></textarea>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200">
+        <h3 class="text-lg font-bold text-purple-800 mb-4 flex items-center gap-2">
+           <span class="text-2xl">🧠</span> Occupational Therapy (OT) </h3>
+        <div class="checkbox-grid">
+          <div class="checkbox-item">
+            <input id="OT_MouthCare" name="OT_MouthCare" type="checkbox" class="form-checkbox">
+            <label for="OT_MouthCare" class="form-checkbox-label">🦷 Mouth Care</label>
+          </div>
+          <div class="checkbox-item">
+             <input id="OT_OralMotor" name="OT_OralMotor" type="checkbox" class="form-checkbox">
+            <label for="OT_OralMotor" class="form-checkbox-label">👄 Oral Motor</label>
+          </div>
+          <div class="checkbox-item">
+            <input id="OT_VitalStim" name="OT_VitalStim" type="checkbox" class="form-checkbox">
+            <label for="OT_VitalStim" class="form-checkbox-label">⚡ VitalStim</label>
+          </div>
+           <div class="checkbox-item">
+            <input id="OT_Speech" name="OT_Speech" type="checkbox" class="form-checkbox">
+            <label for="OT_Speech" class="form-checkbox-label">💬 Speech</label>
+          </div>
+          <div class="checkbox-item">
+            <input id="OT_Cognitive" name="OT_Cognitive" type="checkbox" class="form-checkbox">
+            <label for="OT_Cognitive" class="form-checkbox-label">🧩 Cognitive</label>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label for="OT_Note" class="form-label text-purple-700">OT Note</label>
+          <textarea id="OT_Note" name="OT_Note" class="form-textarea border-purple-300 focus:border-purple-500 focus:ring-purple-100" placeholder="e.g., Practiced fine motor skills..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 border-t-2 border-dashed border-gray-300 pt-6">
+      <h3 class="text-lg font-bold text-primary-800 mb-4 flex items-center gap-2">
+        <span class="text-2xl">🪑</span>
+        Mobility Activities
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <label for="SittingTime" class="form-label">
+             <span class="text-amber-600">🪑</span>
+            Sitting Time (HH:MM)
+          </label>
+          <input type="time" id="SittingTime" name="SittingTime" class="form-input" value="00:00" step="60">
+        </div>
+        <div>
+          <label for="StandingTime" class="form-label">
+            <span class="text-green-600">🧍</span>
+             Standing Time (HH:MM)
+          </label>
+          <input type="time" id="StandingTime" name="StandingTime" class="form-input" value="00:00" step="60">
+        </div>
+        <div>
+          <label for="WalkingSteps" class="form-label">
+            <span class="text-blue-600">👟</span>
+            Walking (ก้าว)
+          </label>
+          <input type="number" id="WalkingSteps" name="WalkingSteps" class="form-input" value="0" placeholder="0">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section border-l-4 border-l-purple-500">
+    <h2 class="form-title text-purple-700">
+      <span class="icon-wrapper bg-gradient-to-br from-purple-100 to-purple-200">🧠</span>
+      Behavior & Symptoms
+    </h2>
+
+    <div class="mb-6 bg-gradient-to-br from-indigo-50 to-blue-50 p-5 rounded-xl border-2 border-indigo-200">
+      <h3 class="text-lg font-bold text-indigo-800 mb-4 flex items-center gap-2">
+        <span class="text-2xl">😴</span>
+        Sleep / Apnea
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label for="ApneaDayCount" class="form-label">
+            <span class="text-orange-500">☀️</span>
+             Apnea Day (ครั้ง)
+          </label>
+          <input type="number" id="ApneaDayCount" name="ApneaDayCount" class="form-input" value="0" placeholder="0">
+        </div>
+        <div>
+          <label for="ApneaNightCount" class="form-label">
+            <span class="text-indigo-600">🌙</span>
+            Apnea Night (ครั้ง)
+           </label>
+          <input type="number" id="ApneaNightCount" name="ApneaNightCount" class="form-input" value="0" placeholder="0">
+        </div>
+        <div>
+          <label for="SleepDay" class="form-label">
+            <span class="text-yellow-500">☀️</span>
+            Sleep Day (HH:MM)
+          </label>
+          <input type="time" id="SleepDay" name="SleepDay" class="form-input" value="00:00" step="60">
+        </div>
+        <div>
+          <label for="SleepNight" class="form-label">
+            <span class="text-blue-600">🌙</span>
+            Sleep Night (HH:MM)
+          </label>
+          <input type="time" id="SleepNight" name="SleepNight" class="form-input" value="00:00" step="60">
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-6 border-t-2 border-dashed border-gray-300 pt-6 bg-gradient-to-br from-red-50 to-orange-50 p-5 rounded-xl border-2 border-red-200">
+      <h3 class="text-lg font-bold text-red-800 mb-4 flex items-center gap-2">
+        <span class="text-2xl">😠</span>
+        Behavioral Issues
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <label for="AgitationCount" class="form-label">
+             <span class="text-red-600">😤</span>
+            Agitation (ครั้ง)
+          </label>
+          <input type="number" id="AgitationCount" name="AgitationCount" class="form-input" value="0" placeholder="0">
+        </div>
+        <div>
+          <label for="DeliriumCount" class="form-label">
+            <span class="text-orange-600">😵</span>
+             Delirium (ครั้ง)
+          </label>
+          <input type="number" id="DeliriumCount" name="DeliriumCount" class="form-input" value="0" placeholder="0">
+        </div>
+        <div>
+          <label for="DeliriumTime" class="form-label">
+            <span class="text-orange-600">⏰</span>
+            Delirium Time
+          </label>
+          <input type="time" id="DeliriumTime" name="DeliriumTime" class="form-input">
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-6 border-t-2 border-dashed border-gray-300 pt-6 bg-gradient-to-br from-amber-50 to-yellow-50 p-5 rounded-xl border-2 border-amber-200">
+      <h3 class="text-lg font-bold text-amber-800 mb-4 flex items-center gap-2">
+        <span class="text-2xl">🩺</span>
+         Common Symptoms
+      </h3>
+      <div class="checkbox-grid">
+        <div class="checkbox-item">
+          <input id="S_Fever" name="S_Fever" type="checkbox" class="form-checkbox">
+          <label for="S_Fever" class="form-checkbox-label">🌡️ Fever (ไข้)</label>
+        </div>
+        <div class="checkbox-item">
+          <input id="S_Cough" name="S_Cough" type="checkbox" class="form-checkbox">
+          <label for="S_Cough" class="form-checkbox-label">😷 Cough (ไอ)</label>
+        </div>
+        <div class="checkbox-item">
+          <input id="S_RunnyNose" name="S_RunnyNose" type="checkbox" class="form-checkbox">
+          <label for="S_RunnyNose" class="form-checkbox-label">👃 Runny Nose</label>
+        </div>
+        <div class="checkbox-item">
+          <input id="S_Vomiting" name="S_Vomiting" type="checkbox" class="form-checkbox">
+          <label for="S_Vomiting" class="form-checkbox-label">🤮 Vomiting (อาเจียน)</label>
+        </div>
+        <div class="checkbox-item">
+          <input id="S_Diarrhea" name="S_Diarrhea" type="checkbox" class="form-checkbox">
+          <label for="S_Diarrhea" class="form-checkbox-label">💩 Diarrhea (ท้องเสีย)</label>
+        </div>
+        <div class="checkbox-item">
+          <input id="S_Headache" name="S_Headache" type="checkbox" class="form-checkbox">
+          <label for="S_Headache" class="form-checkbox-label">🤕 Headache</label>
+        </div>
+        <div class="checkbox-item">
+           <input id="S_Seizure" name="S_Seizure" type="checkbox" class="form-checkbox">
+          <label for="S_Seizure" class="form-checkbox-label">⚡ Seizure (ชัก)</label>
+        </div>
+        <div class="checkbox-item">
+          <input id="S_Rash" name="S_Rash" type="checkbox" class="form-checkbox">
+          <label for="S_Rash" class="form-checkbox-label">🔴 Rash (ผื่น)</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t-2 border-dashed border-gray-300 pt-6 bg-gradient-to-br from-slate-50 to-gray-50 p-5 rounded-xl border-2 border-slate-200">
+      <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <span class="text-2xl">📝</span>
+        Clinical Notes
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="Note_PRN_Med" class="form-label">
+            <span class="text-blue-600">💊</span>
+             PRN Medication Given
+          </label>
+          <textarea id="Note_PRN_Med" name="Note_PRN_Med" class="form-textarea" placeholder="e.g., Paracetamol 500mg PO"></textarea>
+        </div>
+        <div>
+          <label for="Note_ChiefComplaint" class="form-label">
+            <span class="text-purple-600">📋</span>
+            Chief Complaint / Notes
+          </label>
+           <textarea id="Note_ChiefComplaint" name="Note_ChiefComplaint" class="form-textarea" placeholder="e.g., Patient reports headache..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-nav-buttons">
+    <button type="button" data-page="page-vitals" class="nav-button form-nav-button form-nav-menu">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      Vitals
+    </button>
+    <button type="submit" class="submit-button flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      Save Activity
+    </button>
+    <button type="button" data-page="page-medication" class="nav-button form-nav-button form-nav-next">
+      Next
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+    </button>
+  </div>
+</form>
