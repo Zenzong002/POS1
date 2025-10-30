@@ -1,0 +1,1149 @@
+// Global variable for the Spreadsheet
+const ss = SpreadsheetApp.getActiveSpreadsheet();
+// NEW: ID ของโฟลเดอร์ Google Drive สำหรับอัปโหลดไฟล์
+const UPLOAD_FOLDER_ID = '1LGG8GJIT7BQcgu0DqkT4w5994JouNUSh'; 
+
+// --- SCRIPT-WIDE CONSTANTS ---
+// (คุณมีตัวแปร ss และ UPLOAD_FOLDER_ID อยู่แล้ว)
+
+
+/**
+ * -----------------------------------------------------------------
+ * NEW: ADMIN SETUP FUNCTIONS
+ * ส่วนใหม่สำหรับสร้างเมนู Admin เพื่อรันสคริปต์ตั้งค่า Sheet
+ * -----------------------------------------------------------------
+ */
+
+/**
+ * สร้างเมนู "Admin Setup" บน Google Sheet
+ * เพื่อให้คุณสามารถกดรันสคริปต์นี้ได้ง่ายๆ
+ */
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('เมนู Admin')
+    .addItem('🚀 1. สร้าง/รีเซ็ต Sheet ทั้งหมด', 'setupSpreadsheet')
+    .addToUi();
+}
+
+/**
+ * ฟังก์ชันหลัก: สร้าง Sheet ทั้ง 6 หน้า และใส่ Headers ทั้งหมด
+ * ให้คุณกดรันฟังก์ชันนี้จากเมนู "Admin Setup" -> "สร้าง/รีเซ็ต Sheet ทั้งหมด"
+ */
+function setupSpreadsheet() {
+  const ui = SpreadsheetApp.getUi();
+  // ถามยืนยันก่อน
+  const response = ui.alert(
+    'ยืนยันการตั้งค่า',
+    'สคริปต์นี้จะสร้าง Sheet ทั้ง 6 หน้า (Users, DailyVitals, DailyActivity, Medication, Lab, Documents) หากมี Sheet อยู่แล้ว ข้อมูลเก่าจะถูกล้างและสร้างหัวตารางใหม่ทั้งหมด ยืนยันที่จะทำต่อหรือไม่?',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (response !== ui.Button.YES) {
+    ui.alert('ยกเลิกแล้ว', 'ไม่ได้ดำเนินการใดๆ', ui.ButtonSet.OK);
+    return;
+  }
+  
+  try {
+    Logger.log('Starting Spreadsheet Setup...');
+    
+    [cite_start]// 1. Users Sheet (อ้างอิงจากฟังก์ชัน login/registerUser [cite: 46-71])
+    const usersHeaders = [
+      'Email', 'PasswordHash', 'Salt', 'Role'
+    ];
+    createSheetWithHeaders('Users', usersHeaders);
+
+    [cite_start]// 2. DailyVitals Sheet (อ้างอิงจาก Page-Vitals.html [cite: 393-419])
+    const vitalsHeaders = [
+      'Timestamp', 'RecordDateTime', 'Weight', 'Temperature', 'BPSystolic', 'BPDiastolic', 
+      'HeartRate', 'RespiratoryRate', 'SpO2', 'GCS', 'O2Support', 'O2LPM', 'Intake', 
+      'OutputUrine', 'OutputStool', 'OutputSuction', 'SecretionColor', 'StoolColor', 
+      'StoolType', 'Rash', 'LungSound', 'Edema', 'TryWeanMin', 'Cyanosis'
+    ];
+    createSheetWithHeaders('DailyVitals', vitalsHeaders);
+
+    [cite_start]// 3. DailyActivity Sheet (อ้างอิงจาก Page-Activity.html [cite: 336-365] [cite_start]และ saveActivityData [cite: 91-95])
+    const activityHeaders = [
+      'Timestamp', 'RecordDateTime', 
+      // PT
+      'PT_Mobility', 'PT_Balance', 'PT_Strength', 'PT_Gait', 'PT_Aerobic', 'PT_ChestPT', 'PT_Note',
+      // OT
+      'OT_MouthCare', 'OT_OralMotor', 'OT_VitalStim', 'OT_Speech', 'OT_Cognitive', 'OT_Note',
+      // Mobility
+      'SittingTime', 'SittingTimeMin', 'StandingTime', 'StandingTimeMin', 'WalkingSteps',
+      // Behavior/Sleep
+      'ApneaDayCount', 'ApneaNightCount', 'SleepDay', 'SleepDayHours', 'SleepNight', 'SleepNightHours',
+      'AgitationCount', 'DeliriumCount', 'DeliriumTime',
+      // Symptoms
+      'S_Fever', 'S_Cough', 'S_RunnyNose', 'S_Vomiting', 'S_Diarrhea', 'S_Headache', 'S_Seizure', 'S_Rash',
+      // Notes
+      'Note_PRN_Med', 'Note_ChiefComplaint'
+    ];
+    createSheetWithHeaders('DailyActivity', activityHeaders);
+
+    [cite_start]// 4. Medication Sheet (อ้างอิงจาก Page-Medication.html [cite: 24-36])
+    const medHeaders = [
+      'Timestamp', 'RecordDateTime', 'DrugName', 'Dose', 'Frequency', 'Route', 'Note'
+    ];
+    createSheetWithHeaders('Medication', medHeaders);
+
+    [cite_start]// 5. Lab Sheet (อ้างอิงจาก Page-Lab.html [cite: 80-93])
+    const labHeaders = [
+      'Timestamp', 'RecordDateTime',
+      // CBC
+      'WBC', 'Neutrophil', 'Lymphocyte', 'Monocyte', 'Eosinophil', 'Basophil', 'RBC', 'Hb', 'Hct', 
+      'MCV', 'MCH', 'MCHC', 'RDW', 'Platelet',
+      // LFT
+      'AST', 'ALT', 'ALP', 'GGT', 'TotalBilirubin', 'DirectBilirubin', 'TotalProtein', 'Albumin', 'Globulin', 'AG_Ratio',
+      // Renal
+      'BUN', 'Creatinine', 'eGFR', 'UricAcid', 'Sodium', 'Potassium', 'Chloride', 'Bicarbonate', 'Calcium', 'Phosphate', 'Magnesium',
+      // Vitamins
+      'VitaminD', 'VitaminB12', 'Folate', 'Iron', 'Ferritin', 'TIBC', 'TransferrinSat', 'Zinc', 'Copper',
+      // Reports
+      'SputumCS', 'CXRReport'
+    ];
+    createSheetWithHeaders('Lab', labHeaders);
+
+    [cite_start]// 6. Documents Sheet (อ้างอิงจากฟังก์ชัน saveFile [cite: 100-109])
+    const docHeaders = [
+      'Timestamp', 'Category', 'SubCategory', 'FileURL', 'FileName'
+    ];
+    createSheetWithHeaders('Documents', docHeaders);
+
+    Logger.log('Setup Complete!');
+    ui.alert('ตั้งค่าสำเร็จ!', 'สร้าง Sheet ทั้ง 6 หน้า พร้อมหัวตารางเรียบร้อยแล้ว', ui.ButtonSet.OK);
+
+  } catch (e) {
+    Logger.log('Setup Error: ' + e.message);
+    ui.alert('เกิดข้อผิดพลาด', 'เกิดข้อผิดพลาดระหว่างการตั้งค่า: ' + e.message);
+  }
+}
+
+/**
+ * NEW: Helper function (ฟังก์ชันตัวช่วย)
+ * สร้าง Sheet ใหม่ หรือล้าง Sheet เก่า แล้วตั้งค่าหัวตาราง (Header)
+ * @param {string} sheetName ชื่อ Sheet ที่ต้องการ
+ * @param {Array<string>} headers รายการหัวคอลัมน์ (Array)
+ */
+function createSheetWithHeaders(sheetName, headers) {
+  let sheet = ss.getSheetByName(sheetName);
+  
+  if (!sheet) {
+    // ถ้าไม่มี Sheet นี้ ให้สร้างใหม่
+    sheet = ss.insertSheet(sheetName);
+    Logger.log(`Created new sheet: ${sheetName}`);
+  } else {
+    // ถ้ามีอยู่แล้ว ให้ล้างข้อมูลเก่าทั้งหมด
+    Logger.log(`Sheet "${sheetName}" already exists. Clearing content.`);
+    sheet.clear();
+  }
+  
+  // เขียนหัวตาราง (Headers) ลงในแถวที่ 1
+  const headerRange = sheet.getRange(1, 1, 1, headers.length);
+  headerRange.setValues([headers]); // setValues ต้องใช้ Array 2 มิติ
+  
+  // จัดรูปแบบหัวตาราง
+  headerRange.setFontWeight('bold'); // ทำให้เป็นตัวหนา
+  sheet.setFrozenRows(1); // ตรึงแถวที่ 1 ไว้
+  
+  // (Optional) ปรับขนาดคอลัมน์อัตโนมัติ
+  for (let i = 1; i <= headers.length; i++) {
+    sheet.autoResizeColumn(i);
+  }
+}
+
+// --- CORE & LOGIN ---
+
+// MODIFIED: doGet ที่รองรับหน้า Register และเช็ค Session
+function doGet(e) {
+  let html;
+  let pageParameter = ''; // ค่าเริ่มต้น
+
+  // --- Safety Check ---
+  if (e && e.parameter && e.parameter.page) {
+    pageParameter = e.parameter.page;
+  }
+  // --- End Safety Check ---
+
+  // 1. เช็ค page parameter
+  if (pageParameter === 'register') {
+    html = HtmlService.createTemplateFromFile('Register').evaluate();
+    html.setTitle('Patient B1 - Register');
+    return html;
+  }
+
+  // 2. ถ้าไม่ใช่หน้า Register ก็เช็ค Session (ใช้ UserProperties)
+  //    (ฟังก์ชัน isSessionValid อยู่ด้านล่าง)
+  const token = PropertiesService.getUserProperties().getProperty('sessionToken');
+
+  if (!token || !isSessionValid(token)) {
+    // ไม่มี token หรือหมดอายุ -> ไปหน้า Login
+    html = HtmlService.createTemplateFromFile('Login').evaluate();
+    html.setTitle('Patient B1 - Login');
+  } else {
+    // มี token -> ไปหน้า Index หลัก
+    html = HtmlService.createTemplateFromFile('Index').evaluate();
+    html.setTitle('Patient B1 Record System')
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+  }
+  return html;
+}
+
+// --- INCLUDE ---
+// Includes HTML partials (like PHP include)
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// NEW: Function for user registration with Hashing/Salting
+// (ชื่อ registerUser ตัว U ใหญ่)
+function registerUser(credentials) {
+  try {
+    const { email, password } = credentials;
+    const usersSheet = ss.getSheetByName('Users'); // เช็คว่ามีชีต Users
+    if (!usersSheet) throw new Error('Users sheet not found.');
+
+    // เพิ่ม: เช็คว่า Email ซ้ำหรือไม่
+    const data = usersSheet.getDataRange().getValues();
+    const headers = data[0]; // ใช้แถวแรกเป็น header
+    const emailColIndex = headers.indexOf('Email');
+    if (emailColIndex === -1) throw new Error('Column "Email" not found in Users sheet.');
+
+    const emailExists = data.slice(1).some(row => row[emailColIndex].toLowerCase() === email.toLowerCase());
+    if (emailExists) {
+      throw new Error('This email is already registered.');
+    }
+    // สิ้นสุด: เช็ค Email ซ้ำ
+
+    // 1. สร้าง Salt
+    const salt = Utilities.getUuid();
+
+    // 2. Hash รหัสผ่าน + Salt
+    const hashBytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password + salt);
+    const passwordHash = hashBytes.map(byte => ('0' + (byte & 0xFF).toString(16)).slice(-2)).join('');
+
+    // 3. บันทึกข้อมูล (Role เริ่มต้น 'Viewer')
+    usersSheet.appendRow([email, passwordHash, salt, 'Viewer']);
+
+    return JSON.stringify({ success: true, message: 'Registration successful.' });
+
+  } catch (e) {
+    Logger.log('Register Error: ' + e.message); // Log error จริงๆ ไว้ดู
+    // ส่งข้อความ Error ที่เข้าใจง่ายกลับไป
+    return JSON.stringify({ success: false, message: 'Registration failed: ' + e.message });
+  }
+}
+
+// MODIFIED: Login function with secure Hash comparison
+function login(credentials) {
+  try {
+    const { email, password } = credentials;
+    const usersSheet = ss.getSheetByName('Users');
+    if (!usersSheet) throw new Error('Users sheet not found.');
+
+    const data = usersSheet.getDataRange().getValues();
+    const headers = data.shift(); // เอา header ออก
+    const emailCol = headers.indexOf('Email');
+    const hashCol = headers.indexOf('PasswordHash');
+    const saltCol = headers.indexOf('Salt');
+    const roleCol = headers.indexOf('Role');
+
+    // เช็คว่าหาคอลัมน์เจอไหม
+    if ([emailCol, hashCol, saltCol, roleCol].includes(-1)) {
+        throw new Error('Missing required columns in Users sheet (Email, PasswordHash, Salt, Role).');
+    }
+
+    const user = data.find(row => row[emailCol].toLowerCase() === email.toLowerCase());
+
+    if (!user) {
+      return JSON.stringify({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (email)' });
+    }
+
+    const storedHash = user[hashCol];
+    const storedSalt = user[saltCol];
+
+    // คำนวณ Hash ใหม่
+    const newHashBytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password + storedSalt);
+    const newHash = newHashBytes.map(byte => ('0' + (byte & 0xFF).toString(16)).slice(-2)).join('');
+
+    // เปรียบเทียบ Hash
+    if (newHash !== storedHash) {
+      return JSON.stringify({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (pass)' });
+    }
+
+    // สร้าง Session
+    const userRole = user[roleCol];
+    const token = createSession(email, userRole);
+    return JSON.stringify({ success: true, token: token });
+
+  } catch (e) {
+    Logger.log('Login Error: ' + e.message);
+    return JSON.stringify({ success: false, message: 'Login failed: ' + e.message });
+  }
+}
+
+// --- Session Management Functions ---
+
+// สร้าง Session Token (อายุ 30 นาที)
+function createSession(email, role) {
+  const token = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, email + new Date().toISOString() + Math.random())); // เพิ่ม random กัน token ชน
+  // ใช้ CacheService สำหรับ session จริง
+  CacheService.getUserCache().put(token, JSON.stringify({ email: email, role: role }), 1800); // 1800 วินาที = 30 นาที
+  return token;
+}
+
+// ตรวจสอบ Session Token จาก Cache
+function isSessionValid(token) {
+  if (!token) return false;
+  const sessionData = CacheService.getUserCache().get(token);
+  return sessionData !== null;
+}
+
+// ฟังก์ชันที่ client เรียกหลัง login สำเร็จ เพื่อเก็บ token ไว้ที่ UserProperties (เพื่อให้ doGet เช็คได้)
+function setUserSessionToken(token) {
+  // ตรวจสอบ token อีกครั้งก่อนเก็บ
+  if (token && isSessionValid(token)) {
+    PropertiesService.getUserProperties().setProperty('sessionToken', token);
+  } else {
+    // ถ้า token ไม่ผ่าน ไม่ต้องเก็บ หรือจะลบของเก่าทิ้งก็ได้
+    PropertiesService.getUserProperties().deleteProperty('sessionToken');
+  }
+}
+
+// ฟังก์ชัน Logout
+function logout() {
+  try {
+      const token = PropertiesService.getUserProperties().getProperty('sessionToken');
+      if (token) {
+        CacheService.getUserCache().remove(token); // ลบจาก Cache
+        PropertiesService.getUserProperties().deleteProperty('sessionToken'); // ลบจาก Properties
+      }
+      return true; // บอก client ว่า logout สำเร็จ
+  } catch (e) {
+      Logger.log('Logout Error: ' + e.message);
+      return false; // บอก client ว่า logout ไม่สำเร็จ
+  }
+}
+
+
+// --- INCLUDE ---
+// Includes HTML partials (like PHP include)
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// --- DATA SAVING FUNCTIONS ---
+
+/**
+ * Saves data to a specified sheet.
+* @param {string} sheetName The name of the sheet to save to.
+* @param {Object} dataObject The data object from the client.
+ * @returns {string} Success message.
+ */
+function saveData(sheetName, dataObject) {
+  try {
+    const sheet = ss.getSheetByName(sheetName);
+if (!sheet) {
+      throw new Error(`Sheet "${sheetName}" not found.`);
+}
+    
+    // Get headers from row 1
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+// Create new row based on headers
+    const newRow = headers.map(header => {
+      if (header === 'Timestamp') {
+        return new Date();
+      }
+      // Handle boolean (checkboxes)
+      if (typeof dataObject[header] === 'boolean') {
+        return dataObject[header];
+      }
+      return dataObject[header] || null; // Use null for empty/undefined fields
+    });
+sheet.appendRow(newRow);
+    
+    return `Data successfully saved to ${sheetName}.`;
+    
+  } catch (e) {
+    Logger.log(e);
+    throw new Error(`Server Error: ${e.message}`);
+}
+}
+
+// MODIFIED: Specific save functions called by the client
+function saveVitalData(data) {
+  // data object will now contain 'Weight'
+  return saveData('DailyVitals', data);
+}
+
+function saveActivityData(data) {
+  // data object will now contain 'PT_Note', 'OT_Note', 'SleepDay', 'SleepNight' (as HH:MM), 'DeliriumTime', 'WalkingSteps'
+  // เราอาจต้องแปลง HH:MM เป็นนาที หากต้องการคำนวณ
+  if (data.SittingTime) {
+    data.SittingTimeMin = convertHHMMtoMinutes(data.SittingTime);
+  }
+  if (data.StandingTime) {
+    data.StandingTimeMin = convertHHMMtoMinutes(data.StandingTime);
+  }
+  if (data.SleepDay) {
+    data.SleepDayHours = convertHHMMtoMinutes(data.SleepDay) / 60;
+  }
+  if (data.SleepNight) {
+    data.SleepNightHours = convertHHMMtoMinutes(data.SleepNight) / 60;
+  }
+  
+  return saveData('DailyActivity', data);
+}
+
+// NEW: Helper to convert HH:MM string to total minutes
+function convertHHMMtoMinutes(hhmm) {
+  if (!hhmm || typeof hhmm !== 'string' || !hhmm.includes(':')) {
+    return 0;
+  }
+  try {
+    const parts = hhmm.split(':');
+    const hours = parseInt(parts[0], 10) || 0;
+    const minutes = parseInt(parts[1], 10) || 0;
+    return (hours * 60) + minutes;
+  } catch (e) {
+    return 0;
+  }
+}
+
+function saveMedicationData(data) {
+  return saveData('Medication', data);
+}
+
+function saveLabData(data) {
+  // MODIFIED: This will now save all the new lab fields
+  return saveData('Lab', data);
+}
+
+// NEW: Function to handle file uploads
+function saveFile(fileData, category, otherCategory) {
+  try {
+    const { MimeType, FileName, FileContent } = fileData;
+    const blob = Utilities.newBlob(Utilities.base64Decode(FileContent), MimeType, FileName);
+    
+    const mainFolder = DriveApp.getFolderById(UPLOAD_FOLDER_ID);
+    let targetFolder;
+    
+    // หาหรือสร้างโฟลเดอร์ตามหมวดหมู่
+    const subFolderName = (category === 'Other') ? otherCategory : category;
+    const folders = mainFolder.getFoldersByName(subFolderName);
+    
+    if (folders.hasNext()) {
+      targetFolder = folders.next();
+    } else {
+      targetFolder = mainFolder.createFolder(subFolderName);
+    }
+    
+    // อัปโหลดไฟล์
+    const file = targetFolder.createFile(blob);
+    const fileUrl = file.getUrl();
+    
+    // บันทึกข้อมูลลงชีต 'Documents'
+    const docSheet = ss.getSheetByName('Documents');
+    if (!docSheet) throw new Error('Documents sheet not found.');
+    
+    docSheet.appendRow([
+      new Date(),       // Timestamp
+      category,         // Category
+      subFolderName,    // SubCategory (เผื่อ 'Other')
+      fileUrl,          // FileURL
+      FileName          // FileName
+    ]);
+    
+    return `File "${FileName}" uploaded successfully to ${subFolderName}.`;
+
+  } catch (e) {
+    Logger.log(e);
+    throw new Error(`Server Error: ${e.message}`);
+  }
+}
+
+
+// --- DATA FETCHING FUNCTIONS ---
+
+/**
+ * Utility to get data from a sheet and convert to array of objects.
+* @param {string} sheetName The name of the sheet.
+* @param {string} dateColumnName The name of the column to filter by date (e.g., "RecordDateTime").
+ * @param {string} timeRange String like "7d", "14d", "30d", or "all".
+ * @returns {Array<Object>} Array of data objects.
+ */
+// MODIFIED: getData (Optimized Server-Side Filtering)
+// (แทนที่ฟังก์ชัน getData เก่า)
+function getData(sheetName, dateColumnName = "RecordDateTime", timeRange = "all") {
+  const sheet = ss.getSheetByName(sheetName);
+  // ถ้าชีตไม่มีอยู่ หรือมีแค่ header (แถว 1) ให้คืนค่าว่าง
+  if (!sheet || sheet.getLastRow() <= 1) return [];
+
+  // อ่าน Headers (แถว 1)
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const dateColIndex = headers.indexOf(dateColumnName);
+  // ถ้าหาคอลัมน์วันที่ไม่เจอ ให้คืนค่าว่าง
+  if (dateColIndex === -1 && dateColumnName !== null) { // เพิ่มเช็ค dateColumnName !== null
+     Logger.log(`Date column "${dateColumnName}" not found in sheet "${sheetName}". Returning empty array.`);
+     return [];
+  }
+
+
+  let startRow = 2; // แถวเริ่มต้นที่จะอ่านข้อมูล (แถว 2 เสมอ ถ้าเป็น 'all')
+  const lastRow = sheet.getLastRow();
+
+  // 1. คำนวณวันที่เริ่มต้นสำหรับการกรอง (ถ้าไม่ใช่ 'all')
+  let filterDate = null;
+  if (timeRange !== "all") {
+    filterDate = new Date();
+    if (timeRange === "7d") filterDate.setDate(filterDate.getDate() - 7);
+    else if (timeRange === "14d") filterDate.setDate(filterDate.getDate() - 14);
+    else if (timeRange === "30d") filterDate.setDate(filterDate.getDate() - 30);
+    filterDate.setHours(0, 0, 0, 0); // ตั้งเป็นเวลา 00:00:00
+
+    // --- ส่วน Optimize ---
+    // 2. อ่าน *เฉพาะ* คอลัมน์วันที่ทั้งหมด (เร็วกว่าอ่านทุกคอลัมน์)
+    //   (แถวที่ 2, คอลัมน์ของวันที่, จำนวนแถว = lastRow-1, จำนวน 1 คอลัมน์)
+    const dateValues = sheet.getRange(2, dateColIndex + 1, lastRow - 1, 1).getValues();
+
+    // 3. วนหาแถวเริ่มต้นจาก "ล่างขึ้นบน" (ข้อมูลใหม่ -> เก่า)
+    for (let i = dateValues.length - 1; i >= 0; i--) {
+      // ตรวจสอบว่า dateValues[i] และ dateValues[i][0] มีค่าจริงก่อนสร้าง Date object
+      if (dateValues[i] && dateValues[i][0]) {
+          const recordDate = new Date(dateValues[i][0]);
+          // เช็คว่าเป็น Date ที่ถูกต้องหรือไม่
+          if (!isNaN(recordDate.getTime())) {
+              if (recordDate < filterDate) {
+                // เจอแถวแรกที่ *เก่ากว่า* วันที่กรอง
+                // แถวที่เราต้องการเริ่มอ่านคือแถวถัดไป (i+1)
+                // แถวจริงในชีตคือ index + 2 (เพราะเริ่มอ่านจากแถว 2)
+                startRow = i + 1 + 2;
+                break; // หยุดค้นหา
+              }
+          } else {
+              // ถ้าค่าในคอลัมน์วันที่ไม่ถูกต้อง ให้ข้ามไป หรือ Log ไว้
+              Logger.log(`Invalid date found in sheet "${sheetName}" at row index ${i + 2}: ${dateValues[i][0]}`);
+          }
+      } else {
+           Logger.log(`Empty or invalid entry in date column in sheet "${sheetName}" at row index ${i + 2}`);
+      }
+
+
+    }
+    // ถ้าวนจนสุดแล้วไม่เจอแถวที่เก่ากว่า (เช่น ข้อมูล 30 วันล่าสุดยังอยู่ในชีตทั้งหมด)
+    // startRow จะยังคงเป็น 2 (ค่าเริ่มต้น)
+    // --- สิ้นสุดส่วน Optimize ---
+  }
+
+  // ถ้าคำนวณแล้ว startRow มันเกินแถวสุดท้าย (เช่น ไม่มีข้อมูลในช่วงวันที่เลือก) ให้คืนค่าว่าง
+  if (startRow > lastRow) return [];
+
+  // 4. อ่านข้อมูล *เฉพาะช่วงแถว* ที่เราหาเจอ
+  const numRowsToGet = lastRow - startRow + 1;
+  const dataValues = sheet.getRange(startRow, 1, numRowsToGet, headers.length).getValues();
+
+  // 5. แปลง Array เป็น Array of Objects (เหมือนเดิม)
+  const result = dataValues.map(row => {
+    const obj = {};
+    headers.forEach((header, index) => {
+      obj[header] = row[index];
+    });
+    return obj;
+  });
+
+  // 6. เรียงลำดับข้อมูล (ถ้าต้องการเรียงตามวันที่จากใหม่ไปเก่าเหมือนเดิม)
+  if (dateColIndex !== -1) {
+      result.sort((a, b) => {
+          const dateA = new Date(a[dateColumnName]);
+          const dateB = new Date(b[dateColumnName]);
+          // Handle invalid dates if necessary
+          if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+          if (isNaN(dateA.getTime())) return 1; // Put invalid dates at the end
+          if (isNaN(dateB.getTime())) return -1;
+          return dateB - dateA; // Sort descending (newest first)
+      });
+  }
+
+
+  return result;
+}
+
+// --- LOGS & DASHBOARD DATA ---
+// We can just use the generic `getData` function and stringify the result.
+// Stringify is safer for passing complex objects/dates from GAS to client.
+// MODIFIED: getMedicationData (for Pagination)
+// (แทนที่ฟังก์ชัน getMedicationData เก่า)
+function getMedicationData(timeRange, pageNumber = 1) { // รับ pageNumber เพิ่ม (ค่าเริ่มต้นคือ 1)
+  // 1. ดึงข้อมูลทั้งหมดที่กรองแล้ว (จาก getData ที่เรา Optimize แล้ว)
+  const allData = getData('Medication', 'RecordDateTime', timeRange);
+
+  const pageSize = 20; // **กำหนดว่าจะแสดงผลหน้าละกี่รายการ** (เช่น 20)
+  const totalItems = allData.length;
+  // คำนวณจำนวนหน้าทั้งหมด (ปัดเศษขึ้น) ถ้าไม่มีข้อมูลเลยก็ให้เป็น 1 หน้า
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+  // ตรวจสอบว่า pageNumber ไม่เกิน totalPages
+  const currentPage = Math.max(1, Math.min(pageNumber, totalPages)); // ให้หน้าอยู่ระหว่าง 1 ถึง totalPages
+
+  // 2. คำนวณ Index เริ่มต้นและสิ้นสุดของข้อมูลในหน้านั้น
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize; // slice จะไม่รวมตัวสุดท้าย ไม่ต้อง -1
+
+  // 3. ใช้ .slice() เพื่อ "หั่น" เอาเฉพาะข้อมูลของหน้านี้
+  const paginatedData = allData.slice(startIndex, endIndex);
+
+  // 4. ส่งกลับเป็น Object ที่มีข้อมูล 3 อย่าง:
+  //    - data: ข้อมูลเฉพาะของหน้านี้
+  //    - totalPages: จำนวนหน้าทั้งหมด
+  //    - currentPage: หน้าปัจจุบันที่ส่งข้อมูลไป
+  return JSON.stringify({
+    data: paginatedData,
+    totalPages: totalPages,
+    currentPage: currentPage
+  });
+}
+
+function getLabData(timeRange) {
+  const data = getData('Lab', 'RecordDateTime', timeRange);
+  return JSON.stringify(data);
+}
+
+// NEW: getLabData (for Pagination)
+// (วางฟังก์ชันนี้เพิ่มเข้าไปใน Code.gs)
+function getLabData_Paginated(timeRange, pageNumber = 1) {
+  const allData = getData('Lab', 'RecordDateTime', timeRange); // ใช้ getData ที่ Optimize แล้ว
+  const pageSize = 10; // ** Lab Log แสดงหน้าละ 10 รายการ (ข้อมูลเยอะกว่า MedLog) **
+  const totalItems = allData.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const currentPage = Math.max(1, Math.min(pageNumber, totalPages));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = allData.slice(startIndex, endIndex);
+
+  return JSON.stringify({
+    data: paginatedData,
+    totalPages: totalPages,
+    currentPage: currentPage
+  });
+}
+
+// NEW: getDocumentLogData (for Pagination)
+// (วางฟังก์ชันนี้เพิ่มเข้าไปใน Code.gs)
+function getDocumentLogData_Paginated(timeRange, category, pageNumber = 1) { // เพิ่ม category parameter
+  // 1. ดึงข้อมูลทั้งหมดก่อน (กรองตาม Time Range)
+  let allData = getData('Documents', 'Timestamp', timeRange);
+
+  // 2. กรองตาม Category (ถ้าไม่ใช่ 'All')
+  if (category && category !== 'All') {
+    allData = allData.filter(row => row.Category === category);
+  }
+  
+  // 3. ทำ Pagination
+  const pageSize = 15; // ** Document Log แสดงหน้าละ 15 รายการ **
+  const totalItems = allData.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const currentPage = Math.max(1, Math.min(pageNumber, totalPages));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = allData.slice(startIndex, endIndex);
+
+  return JSON.stringify({
+    data: paginatedData,
+    totalPages: totalPages,
+    currentPage: currentPage
+  });
+}
+
+// MODIFIED: Renamed to be more specific for dashboard
+function getVitalsDashboardData(timeRange) {
+  const data = getData('DailyVitals', 'RecordDateTime', timeRange);
+// Sort ascending for charts
+  data.sort((a, b) => new Date(a.RecordDateTime) - new Date(b.RecordDateTime));
+  return JSON.stringify(data);
+}
+
+// MODIFIED: Renamed to be more specific for dashboard
+function getActivityDashboardData(timeRange) {
+  const data = getData('DailyActivity', 'RecordDateTime', timeRange);
+// Sort ascending for charts
+  data.sort((a, b) => new Date(a.RecordDateTime) - new Date(b.RecordDateTime));
+  return JSON.stringify(data);
+}
+
+// MODIFIED: This function is now perfect for all lab trends
+function getLabTrendData(labName, timeRange) {
+  const sheet = ss.getSheetByName('Lab');
+  
+  // --- 🛑 START OF FIX 🛑 ---
+  // เพิ่มการตรวจสอบว่า Sheet ว่างเปล่า หรือมีแค่ Header
+  if (!sheet || sheet.getLastRow() <= 1) {
+    Logger.log(`getLabTrendData: Sheet "Lab" is empty or missing.`);
+    return JSON.stringify([]); // ส่ง Array ว่างกลับไป
+  }
+  // --- 🛑 END OF FIX 🛑 ---
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data.shift();
+
+  // Calculate date filter
+  let filterDate = null;
+if (timeRange !== "all") {
+    filterDate = new Date();
+    if (timeRange === "7d") filterDate.setDate(filterDate.getDate() - 7);
+else if (timeRange === "14d") filterDate.setDate(filterDate.getDate() - 14);
+    else if (timeRange === "30d") filterDate.setDate(filterDate.getDate() - 30);
+    filterDate.setHours(0, 0, 0, 0);
+}
+  
+  const result = data.map(row => {
+    const recordDate = new Date(row[dateColIndex]);
+    if (filterDate && recordDate < filterDate) {
+      return null;
+    }
+    const value = parseFloat(row[labColIndex]);
+    if (!isNaN(value)) {
+      return {
+        x: recordDate.toISOString(),
+        y: value
+      };
+    }
+    return null;
+  }).filter(obj => obj !== null);
+// Sort ascending
+  result.sort((a, b) => new Date(a.x) - new Date(b.x));
+
+  return JSON.stringify(result);
+}
+
+// NEW: Get Document Log Data
+function getDocumentLogData(timeRange, category) {
+  let data = getData('Documents', 'Timestamp', timeRange);
+  
+  if (category && category !== 'All') {
+    data = data.filter(row => row.Category === category);
+  }
+  
+  return JSON.stringify(data);
+}
+
+
+// --- DAILY SUMMARY FUNCTION ---
+
+function getDailySummaryData(dateString) { 
+  // 1. Define Date Times
+  const parts = dateString.split('-');
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // JS months (0-11)
+  const day = parseInt(parts[2], 10);
+  const startTime = new Date(year, month, day, 0, 0, 0);
+  const endTime = new Date(year, month, day, 23, 59, 59, 999);
+  
+  // MODIFIED: Create summary object
+  const summary = {
+    vitals: {},
+    io: {
+      intake: 0,
+      outputUrine: 0,
+      outputStool: 0,
+      outputSuction: 0,
+      balance: 0,
+      stoolCount: 0,
+      stoolColors: [],
+      stoolTypes: [],
+      secretionColors: []
+    },
+    activity: {
+    sitting: 0,
+      standing: 0,
+      walking: 0, // NEW
+      pt: [],
+      ot: [],
+      ptNotes: [], // NEW
+      otNotes: []  // NEW
+    },
+    behavior: {
+      apneaDay: 0,
+      apneaNight: 0,
+      sleepDay: 0, // MODIFIED: Will store hours
+      sleepNight: 0, // MODIFIED: Will store hours
+      deliriumTimes: [], // NEW
+      prn: [],
+      cc: [],
+      symptoms: [] 
+    },
+    clinical: {
+   tryWean: 0,
+      latest: {},
+      weight: null // NEW
+    },
+    meds: []
+  };
+
+// 2. Fetch Data
+  const vitalsSheet = ss.getSheetByName('DailyVitals');
+const activitySheet = ss.getSheetByName('DailyActivity');
+const medsSheet = ss.getSheetByName('Medication');
+
+// --- 🛑 START OF FIX 🛑 ---
+// ตรวจสอบทีละชีต และดึงข้อมูลเฉพาะเมื่อมีข้อมูล (มากกว่า 1 แถว)
+// ถ้าชีตว่าง (getLastRow() < 1) หรือมีแค่หัว (getLastRow() == 1) ให้ใช้ Array ว่างแทน
+
+const vitalsData = (vitalsSheet.getLastRow() > 1) 
+  ? vitalsSheet.getDataRange().getValues() 
+  : []; // ใช้ Array ว่าง ถ้าไม่มีข้อมูล
+
+const activityData = (activitySheet.getLastRow() > 1) 
+  ? activitySheet.getDataRange().getValues() 
+  : []; // ใช้ Array ว่าง ถ้าไม่มีข้อมูล
+
+const medsData = (medsSheet.getLastRow() > 1) 
+  ? medsSheet.getDataRange().getValues() 
+  : []; // ใช้ Array ว่าง ถ้าไม่มีข้อมูล
+
+// ถ้าไม่มีข้อมูลจากชีตไหนเลย ก็ส่ง summary เปล่าๆ กลับไป
+if (vitalsData.length === 0 && activityData.length === 0 && medsData.length === 0) {
+  Logger.log('DailySummary: No data rows found. Returning empty summary.');
+  return JSON.stringify(summary); // summary เป็น object เปล่าที่ประกาศไว้ก่อนหน้า
+}
+
+// เอา Header (แถวแรก) ออก ต่อเมื่อมีข้อมูลจริงๆ (length > 0)
+const vitalsHeaders = (vitalsData.length > 0) ? vitalsData.shift() : [];
+const activityHeaders = (activityData.length > 0) ? activityData.shift() : [];
+const medsHeaders = (medsData.length > 0) ? medsData.shift() : [];
+// --- 🛑 END OF FIX 🛑 ---
+
+  // 3. Process DailyVitals Sheet
+  const vitalsToProcess = ['Temperature', 'BPSystolic', 'BPDiastolic', 'HeartRate', 'RespiratoryRate', 'SpO2', 'GCS', 'Weight']; // MODIFIED: Added Weight
+  const collectors = {};
+  vitalsToProcess.forEach(v => { collectors[v] = []; });
+  
+  let latestClinical = null;
+vitalsData.forEach(row => {
+    const recordTime = new Date(row[vitalsHeaders.indexOf('RecordDateTime')]);
+    if (recordTime >= startTime && recordTime <= endTime) { 
+      
+      // Vitals Stats
+      vitalsToProcess.forEach(v => {
+        const val = parseFloat(row[vitalsHeaders.indexOf(v)]);
+        if (!isNaN(val)) collectors[v].push(val);
+      });
+      
+      // I/O Sums
+summary.io.intake += parseFloat(row[vitalsHeaders.indexOf('Intake')]) || 0;
+      summary.io.outputUrine += parseFloat(row[vitalsHeaders.indexOf('OutputUrine')]) || 0;
+      const stool = parseFloat(row[vitalsHeaders.indexOf('OutputStool')]) || 0;
+      if (stool > 0) {
+        summary.io.outputStool += stool;
+        summary.io.stoolCount++;
+        const stoolColor = row[vitalsHeaders.indexOf('StoolColor')];
+        if (stoolColor) summary.io.stoolColors.push(stoolColor);
+        const stoolType = row[vitalsHeaders.indexOf('StoolType')];
+        if (stoolType) summary.io.stoolTypes.push(stoolType);
+}
+      summary.io.outputSuction += parseFloat(row[vitalsHeaders.indexOf('OutputSuction')]) || 0;
+
+      const secretion = row[vitalsHeaders.indexOf('SecretionColor')];
+      if (secretion) summary.io.secretionColors.push(secretion);
+// Clinical
+      summary.clinical.tryWean += parseFloat(row[vitalsHeaders.indexOf('TryWeanMin')]) || 0;
+// Latest Clinical Obs
+      if (!latestClinical || recordTime > latestClinical.time) {
+        latestClinical = {
+          time: recordTime,
+          rash: row[vitalsHeaders.indexOf('Rash')],
+          lung: row[vitalsHeaders.indexOf('LungSound')],
+          edema: row[vitalsHeaders.indexOf('Edema')]
+        };
+}
+    }
+  });
+
+  // Calculate Vitals Stats
+  vitalsToProcess.forEach(v => {
+    const arr = collectors[v];
+    if (arr.length > 0) {
+      summary.vitals[v] = {
+        avg: arr.reduce((a, b) => a + b, 0) / arr.length,
+        max: Math.max(...arr),
+        min: Math.min(...arr),
+        latest: arr[arr.length - 1]
+      };
+    } else {
+ summary.vitals[v] = { avg: null, max: null, min: null, latest: null };
+    }
+  });
+  
+  // NEW: Set latest weight
+  if(summary.vitals.Weight && summary.vitals.Weight.latest) {
+    summary.clinical.weight = summary.vitals.Weight.latest;
+  }
+  
+// Calculate I/O Balance
+  const totalOutput = summary.io.outputUrine + summary.io.outputStool + summary.io.outputSuction;
+  summary.io.balance = summary.io.intake - totalOutput;
+// Unique I/O details
+  summary.io.stoolColors = [...new Set(summary.io.stoolColors)];
+  summary.io.stoolTypes = [...new Set(summary.io.stoolTypes)];
+  summary.io.secretionColors = [...new Set(summary.io.secretionColors)];
+// Set latest clinical
+  if (latestClinical) summary.clinical.latest = latestClinical;
+  
+// 4. Process DailyActivity Sheet
+  const ptCols = ['PT_Mobility', 'PT_Balance', 'PT_Strength', 'PT_Gait', 'PT_Aerobic', 'PT_ChestPT'];
+const otCols = ['OT_MouthCare', 'OT_OralMotor', 'OT_VitalStim', 'OT_Speech', 'OT_Cognitive'];
+  const symptomsCols = ['S_Fever', 'S_Cough', 'S_RunnyNose', 'S_Vomiting', 'S_Diarrhea', 'S_Headache', 'S_Seizure', 'S_Rash'];
+let ptDone = new Set();
+  let otDone = new Set();
+  let symptomsDone = new Set();
+  
+activityData.forEach(row => {
+    const recordTime = new Date(row[activityHeaders.indexOf('RecordDateTime')]);
+    if (recordTime >= startTime && recordTime <= endTime) { 
+      
+      // Activity Sums
+      // MODIFIED: Use the converted Min values
+      summary.activity.sitting += parseFloat(row[activityHeaders.indexOf('SittingTimeMin')]) || 0;
+      summary.activity.standing += parseFloat(row[activityHeaders.indexOf('StandingTimeMin')]) || 0;
+      summary.activity.walking += parseFloat(row[activityHeaders.indexOf('WalkingSteps')]) || 0; // NEW
+
+      // Behavior Sums
+      summary.behavior.apneaDay += parseFloat(row[activityHeaders.indexOf('ApneaDayCount')]) || 0;
+      summary.behavior.apneaNight += parseFloat(row[activityHeaders.indexOf('ApneaNightCount')]) || 0;
+      // MODIFIED: Use the converted Hour values
+      summary.behavior.sleepDay += parseFloat(row[activityHeaders.indexOf('SleepDayHours')]) || 0;
+     summary.behavior.sleepNight += parseFloat(row[activityHeaders.indexOf('SleepNightHours')]) || 0;
+      
+      // NEW: Delirium Time
+      const deliriumTime = row[activityHeaders.indexOf('DeliriumTime')];
+      if (deliriumTime) summary.behavior.deliriumTimes.push(deliriumTime);
+      
+      // Notes
+      const prn = row[activityHeaders.indexOf('Note_PRN_Med')];
+      if (prn) summary.behavior.prn.push(prn);
+const cc = row[activityHeaders.indexOf('Note_ChiefComplaint')];
+      if (cc) summary.behavior.cc.push(cc);
+      
+      // NEW: PT/OT Notes
+      const ptNote = row[activityHeaders.indexOf('PT_Note')];
+      if (ptNote) summary.activity.ptNotes.push(ptNote);
+      const otNote = row[activityHeaders.indexOf('OT_Note')];
+      if (otNote) summary.activity.otNotes.push(otNote);
+
+      // PT/OT/Symptoms lists
+      ptCols.forEach(col => {
+        if (row[activityHeaders.indexOf(col)] === true) ptDone.add(col.replace('PT_', ''));
+      });
+otCols.forEach(col => {
+        if (row[activityHeaders.indexOf(col)] === true) otDone.add(col.replace('OT_', ''));
+      });
+symptomsCols.forEach(col => {
+        if (row[activityHeaders.indexOf(col)] === true) symptomsDone.add(col.replace('S_', ''));
+      });
+}
+  });
+  
+  summary.activity.pt = [...ptDone];
+  summary.activity.ot = [...otDone];
+  summary.behavior.symptoms = [...symptomsDone];
+  
+// 5. Process Medication Sheet
+  medsData.forEach(row => {
+    const recordTime = new Date(row[medsHeaders.indexOf('RecordDateTime')]);
+    if (recordTime >= startTime && recordTime <= endTime) { 
+      summary.meds.push({
+        time: recordTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+        name: row[medsHeaders.indexOf('DrugName')],
+        dose: row[medsHeaders.indexOf('Dose')],
+        route: row[medsHeaders.indexOf('Route')],
+        note: row[medsHeaders.indexOf('Note')]
+      });
+    
+}
+  });
+
+  return JSON.stringify(summary);
+}
+
+// --- NEW: SUMMARY TABLE FUNCTIONS ---
+
+// NEW: Get data for the main summary table
+function getSummaryTableData(timeRange) {
+
+  // --- 🛑 START OF FIX 🛑 ---
+  // (ฟังก์ชันนี้ใช้ getData ที่ปลอดภัยอยู่แล้ว แต่เราควรเช็คตั้งแต่ต้นทาง)
+  const vitalsSheet = ss.getSheetByName('DailyVitals');
+  const activitySheet = ss.getSheetByName('DailyActivity');
+  
+  if ((!vitalsSheet || vitalsSheet.getLastRow() <= 1) && 
+      (!activitySheet || activitySheet.getLastRow() <= 1)) {
+    Logger.log('getSummaryTableData: Vitals and Activity sheets are empty.');
+    return JSON.stringify([]); // ส่ง Array ว่างกลับไป
+  }
+  // --- 🛑 END OF FIX 🛑 ---
+
+  const vitalsData = getData('DailyVitals', 'RecordDateTime', timeRange);
+  const activityData = getData('DailyActivity', 'RecordDateTime', timeRange);
+  
+  // Group data by date
+  const dailySummaries = {};
+
+  // Helper function to get YYYY-MM-DD string
+  const getLocalDateString = (date) => {
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().split('T')[0];
+  };
+
+  // Initialize day
+  const initDay = (dateStr) => {
+    if (!dailySummaries[dateStr]) {
+      dailySummaries[dateStr] = {
+        date: dateStr,
+        bps: [],
+        bpd: [],
+        intake: 0,
+        output: 0,
+        weight: null,
+        tryWean: 0,
+        sleepDay: 0,
+        sleepNight: 0,
+        apneaDay: 0,
+        apneaNight: 0,
+        prn: [],
+        cc: []
+      };
+    }
+  };
+
+  // Process Vitals
+  vitalsData.forEach(row => {
+    const dateStr = getLocalDateString(row.RecordDateTime);
+    initDay(dateStr);
+    const day = dailySummaries[dateStr];
+    
+    if (row.BPSystolic) day.bps.push(parseFloat(row.BPSystolic));
+    if (row.BPDiastolic) day.bpd.push(parseFloat(row.BPDiastolic));
+    day.intake += parseFloat(row.Intake) || 0;
+    day.output += (parseFloat(row.OutputUrine) || 0) + (parseFloat(row.OutputStool) || 0) + (parseFloat(row.OutputSuction) || 0);
+    if (row.Weight) day.weight = parseFloat(row.Weight); // Takes the last recorded weight of the day
+    day.tryWean += parseFloat(row.TryWeanMin) || 0;
+  });
+
+  // Process Activity
+  activityData.forEach(row => {
+    const dateStr = getLocalDateString(row.RecordDateTime);
+    initDay(dateStr);
+    const day = dailySummaries[dateStr];
+    
+    day.sleepDay += parseFloat(row.SleepDayHours) || 0;
+    day.sleepNight += parseFloat(row.SleepNightHours) || 0;
+    day.apneaDay += parseFloat(row.ApneaDayCount) || 0;
+    day.apneaNight += parseFloat(row.ApneaNightCount) || 0;
+    if (row.Note_PRN_Med) day.prn.push(row.Note_PRN_Med);
+    if (row.Note_ChiefComplaint) day.cc.push(row.Note_ChiefComplaint);
+  });
+
+  // Calculate averages and format
+  const result = Object.values(dailySummaries).map(day => {
+    const avgBps = day.bps.length > 0 ? (day.bps.reduce((a, b) => a + b, 0) / day.bps.length).toFixed(0) : null;
+    const avgBpd = day.bpd.length > 0 ? (day.bpd.reduce((a, b) => a + b, 0) / day.bpd.length).toFixed(0) : null;
+    
+    return {
+      date: day.date,
+      bp: (avgBps && avgBpd) ? `${avgBps}/${avgBpd}` : 'N/A',
+      ioBalance: (day.intake - day.output).toFixed(0),
+      weight: day.weight,
+      tryWean: day.tryWean,
+      sleepDay: day.sleepDay.toFixed(1),
+      sleepNight: day.sleepNight.toFixed(1),
+      apneaDay: day.apneaDay,
+      apneaNight: day.apneaNight,
+      prn: day.prn.join('; '),
+      cc: day.cc.join('; ')
+    };
+  });
+
+  // Sort by date descending (newest first)
+  result.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  return JSON.stringify(result);
+}
+
+// NEW: Get data for the lab comparison table
+function getLabComparisonData(timeRange) {
+  const labData = getData('Lab', 'RecordDateTime', timeRange);
+  
+  // Helper function to get YYYY-MM-DD string
+  const getLocalDateString = (date) => {
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().split('T')[0];
+  };
+  
+  const dailyLabs = {};
+  
+  labData.forEach(row => {
+    const dateStr = getLocalDateString(row.RecordDateTime);
+    if (!dailyLabs[dateStr]) {
+      dailyLabs[dateStr] = { date: dateStr };
+    }
+    
+    // Loop through all properties in the row
+    for (const key in row) {
+      // We only care about lab values (which we assume are not Timestamp, RecordDateTime, etc.)
+      // and we only want the *last* value of the day if multiple labs were entered.
+      if (key !== 'RecordDateTime' && key !== 'Timestamp' && row[key] !== null && row[key] !== '') {
+         // Check if it's a number, or a report string
+         const val = parseFloat(row[key]);
+         if (!isNaN(val)) {
+           dailyLabs[dateStr][key] = val;
+         } else if (typeof row[key] === 'string' && (key === 'SputumCS' || key === 'CXRReport')) {
+           // Don't include large reports in this table
+         }
+      }
+    }
+  });
+
+  // Get all unique lab headers that were found
+  const headers = new Set(['date']);
+  Object.values(dailyLabs).forEach(day => {
+    Object.keys(day).forEach(key => headers.add(key));
+  });
+
+  // Convert to array and sort by date descending
+  const result = Object.values(dailyLabs);
+  result.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  return JSON.stringify({
+    headers: [...headers],
+    data: result
+  });
+}
+
+// NEW: Cache Wrapper for Summary Table Data
+// (วางฟังก์ชันนี้เพิ่มเข้าไปใน Code.gs)
+function getSummaryTableData_Cached(timeRange) { // This function was inside the previous function, move it out
+  // 1. ใช้ ScriptCache (Cache ส่วนกลางที่ทุกคนแชร์)
+  const cache = CacheService.getScriptCache();
+  // 2. สร้าง Key เฉพาะสำหรับข้อมูลนี้
+  const cacheKey = 'SUMMARY_TABLE_' + timeRange; 
+
+  // 3. ลองดึงจาก Cache ก่อน
+  const cachedData = cache.get(cacheKey);
+  if (cachedData != null) {
+    // ถ้าเจอใน Cache
+    Logger.log('Serving Summary Table from CACHE: ' + cacheKey);
+    return cachedData; // ส่งกลับเลย (เร็วมาก)
+  }
+
+  // 4. ถ้าไม่เจอใน Cache (Cache Miss)
+  Logger.log('Cache MISS. Generating Summary Table: ' + cacheKey);
+  
+  // 5. ก็ไปเรียกฟังก์ชันจริง (ที่เรามีอยู่แล้ว ) เพื่อคำนวณใหม่
+  const jsonData = getSummaryTableData(timeRange); 
+
+  // 6. เก็บผลลัพธ์ใหม่ลง Cache (กำหนดอายุ 1800 วินาที = 30 นาที)
+  cache.put(cacheKey, jsonData, 1800);
+
+  // 7. ส่งผลลัพธ์ใหม่กลับไป
+  return jsonData;
+}
