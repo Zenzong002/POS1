@@ -1,0 +1,63 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">📤</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Upload Documents</h1>
+      <p class="text-primary-50 mt-2">Upload images or reports (X-Ray, Lab, etc.)</p>
+    </div>
+  </div>
+</div>
+
+<form id="form-upload">
+
+  <div class="form-section border-l-secondary-500">
+    <h2 class="form-title text-secondary-700">
+      <span class="icon-wrapper bg-gradient-to-br from-secondary-100 to-secondary-200">📂</span>
+      File Details
+    </h2>
+
+    <div class="mb-4">
+      <label for="files-input" class="form-label text-secondary-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+        Select Files
+      </label>
+      <input type="file" id="files-input" class="form-input" multiple required>
+      <p class="text-xs text-gray-500 mt-1">You can select multiple files at once.</p>
+    </div>
+
+    <div class="mb-4">
+      <label for="category-select" class="form-label text-secondary-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        Category
+      </label>
+      <select id="category-select" name="category" class="form-select" required>
+        <option value="">-- Select a Category --</option>
+        <option value="Lab Record">Lab Record (ผลแล็บ)</option>
+        <option value="Xray">Xray (ฟิล์ม)</option>
+        <option value="Drug">Drug (ยา)</option>
+        <option value="Other">Other (อื่นๆ)</option>
+      </select>
+    </div>
+
+    <div id="other-category-div" class="mb-4" style="display: none;">
+      <label for="other-category" class="form-label text-orange-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        Specify "Other" Category
+      </label>
+      <input type="text" id="other-category" name="otherCategory" class="form-input border-orange-300 focus:border-orange-500 focus:ring-orange-100" placeholder="e.g., แผล, บวม">
+    </div>
+
+    <div id="upload-status" class="mt-4 text-center font-medium"></div>
+
+  </div>
+  
+  <div class="mt-8 text-center">
+    <button type="submit" class="submit-button flex items-center justify-center gap-2 mx-auto">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h.5A3.5 3.5 0 0111 6.035M16.5 18H20a4 4 0 004-4v-3.5a3.5 3.5 0 00-5.035-3.465M15 12h-1.098a.5.5 0 01-.447-.276l-1-2A.5.5 0 0012 9.5V9m0 6v.5a.5.5 0 00.553.476l2-1A.5.5 0 0015 14.5V14"></path></svg>
+      Upload Files
+    </button>
+  </div>
+</form>
+
