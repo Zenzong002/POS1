@@ -1,0 +1,122 @@
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="page-header-icon">
+      <span class="text-5xl">💊</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-extrabold tracking-tight">Record Medication (MAR)</h1>
+      <p class="text-primary-50 mt-2">Log all administered medications</p>
+    </div>
+  </div>
+</div>
+
+<form id="form-medication">
+
+  <div class="form-section border-l-4 border-purple-500">
+    <h2 class="form-title text-purple-700">
+      <span class="icon-wrapper bg-gradient-to-br from-purple-100 to-purple-200">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+      </span>
+      Medication Details
+    </h2>
+     
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="relative">
+        <label for="recordDateTime-med" class="form-label text-purple-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Time Given
+        </label>
+        <input type="datetime-local" id="recordDateTime-med" name="RecordDateTime" class="form-input border-purple-300 focus:border-purple-500 focus:ring-purple-100" required>
+      </div>
+      
+      <div class="relative">
+        <label for="DrugName" class="form-label text-purple-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          Drug Name
+        </label>
+        <input type="text" id="DrugName" name="DrugName" class="form-input border-purple-300 focus:border-purple-500 focus:ring-purple-100" required>
+      </div>
+      
+      <div class="relative">
+        <label for="Dose" class="form-label text-purple-700">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+          </svg>
+          Dose (e.g., 500mg, 1 tab)
+        </label>
+         <input type="text" id="Dose" name="Dose" class="form-input border-purple-300 focus:border-purple-500 focus:ring-purple-100">
+      </div>
+      
+      <div class="relative">
+        <label for="Frequency" class="form-label text-purple-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+           </svg>
+          Frequency
+        </label>
+        <select id="Frequency" name="Frequency" class="form-select border-purple-300 focus:border-purple-500 focus:ring-purple-100">
+          <option value="od">od (วันละครั้ง)</option>
+          <option value="bid">bid (วันละ 2 ครั้ง)</option>
+          <option value="tid">tid (วันละ 3 ครั้ง)</option>
+          <option value="qid">qid (วันละ 4 ครั้ง)</option>
+          <option value="hs">hs (ก่อนนอน)</option>
+           <option value="pc">pc (หลังอาหาร)</option>
+          <option value="ac">ac (ก่อนอาหาร)</option>
+          <option value="PRN">PRN (เมื่อจำเป็น)</option>
+          <option value="EOD">EOD (วันเว้นวัน)</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      
+      <div class="relative">
+        <label for="Route" class="form-label text-purple-700">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Route
+        </label>
+        <select id="Route" name="Route" class="form-select border-purple-300 focus:border-purple-500 focus:ring-purple-100">
+          <option value="PO">PO (ทางปาก)</option>
+          <option value="IV">IV (เส้นเลือดดำ)</option>
+          <option value="IM">IM (เข้ากล้ามเนื้อ)</option>
+          <option value="SC">SC (ใต้ผิวหนัง)</option>
+          <option value="ID">ID (เข้าผิวหนัง)</option>
+          <option value="Inhale">Inhale (สูดดม)</option>
+          <option value="Topical">Topical (ทาภายนอก)</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="mt-4">
+       <label for="Note" class="form-label text-purple-700">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Note (หมายเหตุ)
+      </label>
+      <textarea id="Note" name="Note" class="form-textarea border-purple-300 focus:border-purple-500 focus:ring-purple-100" placeholder="e.g., Given for fever > 38.5C"></textarea>
+     </div>
+  </div>
+
+  <div class="form-nav-buttons">
+    <button type="button" data-page="page-activity" class="nav-button form-nav-button form-nav-menu">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      Activity
+    </button>
+    <button type="submit" class="submit-button flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      Save Medication
+    </button>
+    <button type="button" data-page="page-lab" class="nav-button form-nav-button form-nav-next">
+      Next
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+    </button>
+  </div>
+</form>
