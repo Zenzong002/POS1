@@ -1,0 +1,1172 @@
+<script>
+  // --- Global Chart Instances ---
+  let charts = {}; // Object to hold all chart instances for easy destruction
+  let medLogCurrentPage = 1;
+  let medLogTotalPages = 1;
+  let labLogCurrentPage = 1;
+  let labLogTotalPages = 1;
+  let docLogCurrentPage = 1;
+  let docLogTotalPages = 1;
+  // --- NEW: Lab Normal Values ---
+  // Used for LabLog and Lab Summary Table
+  const LAB_NORMAL_VALUES = {
+    WBC: { min: 4, max: 10 },
+    Neutrophil: { min: 40, max: 75 },
+    Lymphocyte: { min: 20, max: 45 },
+    Monocyte: { min: 2, max: 10 },
+    Eosinophil: { min: 1, max: 6 },
+    Basophil: { min: 0, max: 1 },
+    RBC: { min: 4.0, max: 5.9 }, // Using male range for simplicity
+    Hb: { min: 12, max: 17 }, // Combined range
+    Hct: { min: 36, max: 50 }, // Combined range
+    MCV: { min: 80, max: 100 },
+    MCH: { min: 27, max: 33 },
+    MCHC: { min: 32, max: 36 },
+    RDW: { min: 11.5, max: 14.5 },
+    Platelet: { min: 150, max: 450 },
+    AST: { min: 10, max: 40 },
+    ALT: { min: 7, max: 56 },
+    ALP: { min: 40, max: 130 },
+    GGT: { min: 9, max: 48 },
+    TotalBilirubin: { min: 0.2, max: 1.2 },
+    DirectBilirubin: { min: 0.0, max: 0.3 },
+    TotalProtein: { min: 6.0, max: 8.3 },
+    Albumin: { min: 3.5, max: 5.0 },
+    Globulin: { min: 2.0, max: 3.5 },
+    AG_Ratio: { min: 1.0, max: 2.0 },
+    BUN: { min: 7, max: 20 },
+    Creatinine: { min: 0.6, max: 1.3 },
+    eGFR: { min: 90, max: Infinity },
+    UricAcid: { min: 2.6, max: 7.2 },
+    Sodium: { min: 135, max: 145 },
+    Potassium: { min: 3.5, max: 5.0 },
+    Chloride: { min: 98, max: 106 },
+    Bicarbonate: { min: 22, max: 28 },
+    Calcium: { min: 8.5, max: 10.5 },
+    Phosphate: { min: 2.5, max: 4.5 },
+    Magnesium: { min: 1.6, max: 2.6 },
+    VitaminD: { min: 30, max: 100 },
+    VitaminB12: { min: 200, max: 900 },
+    Folate: { min: 3, max: 20 },
+    Iron: { min: 50, max: 175 },
+    Ferritin: { min: 13, max: 400 },
+    TIBC: { min: 250, max: 450 },
+    TransferrinSat: { min: 20, max: 50 }
+  };
+
+  // --- Utility Functions ---
+
+  function showNotification(message, type = 'info') {
+    const notif = document.getElementById('notification');
+    const msg = document.getElementById('notification-message');
+    msg.innerText = message;
+    
+    notif.classList.remove('bg-success', 'bg-error', 'bg-blue-500', 'translate-x-full');
+    
+    if (type === 'success') {
+      notif.classList.add('bg-success'); // Uses class from stylesheet
+    } else if (type === 'error') {
+      notif.classList.add('bg-error'); // Uses class from stylesheet
+    } else {
+      notif.classList.add('bg-blue-500'); // Fallback
+    }
+    
+    notif.style.transform = 'translateX(0)';
+    setTimeout(() => { notif.style.transform = 'translateX(120%)'; }, 3000);
+  }
+
+  function showLoader() { document.getElementById('loader').style.display = 'flex'; }
+  function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+
+  function resetAllForms() {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+      form.reset();
+      setDefaultDateTime(form);
+    });
+  }
+  
+  function onSaveSuccess(response) {
+    hideLoader();
+    showNotification(response, 'success');
+    resetAllForms();
+    showPage('page-home'); // Go back to home after saving
+  }
+
+  function onSaveFailure(error) {
+    hideLoader();
+    showNotification(error.message, 'error');
+  }
+
+  function getNowForInput() {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  }
+  
+  // MODIFIED: Also resets time inputs to "00:00"
+  function setDefaultDateTime(form) {
+    const nowStr = getNowForInput();
+    form.querySelectorAll('input[type="datetime-local"]').forEach(input => input.value = nowStr);
+    form.querySelectorAll('input[type="date"]').forEach(input => input.value = nowStr.slice(0, 10));
+    // Reset specific time inputs to 00:00, not current time
+    form.querySelectorAll('input[type="time"]').forEach(input => input.value = '00:00');
+  }
+
+  function formatDateTime(dateStr) {
+    if (!dateStr) return 'N/A';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleString('th-TH', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    } catch (e) { return dateStr; }
+  }
+
+  // NEW: Clock for Homepage
+  function startClock() {
+    const clockElement = document.getElementById('current-date-time');
+    if (!clockElement) return;
+    
+    function update() {
+      const now = new Date();
+      clockElement.innerText = now.toLocaleString('th-TH', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    }
+    update();
+    setInterval(update, 1000);
+  }
+
+  // NEW: Logout Function
+  function logout() {
+    showLoader();
+    localStorage.removeItem('sessionToken'); // Clear client token
+    google.script.run.withSuccessHandler(() => {
+      // Reload the page, doGet will handle redirect to Login
+      window.location.reload(); 
+    }).logout();
+  }
+
+  // --- Page Navigation ---
+
+  function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+    
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+      targetPage.style.display = 'block';
+    }
+    
+    document.querySelectorAll('.nav-button').forEach(button => {
+      button.classList.toggle('active', button.dataset.page === pageId);
+    });
+
+    const navLinks = document.getElementById('nav-links');
+    if (navLinks && !navLinks.classList.contains('hidden')) {
+      navLinks.classList.add('hidden');
+    }
+    
+    // Load data if page is a report page
+    if (pageId === 'page-dashboard') loadDashboardData();
+    if (pageId === 'page-medlog') loadMedLog();
+    if (pageId === 'page-lablog') loadLabLog();
+    if (pageId === 'page-doclog') loadDocumentLog(); // NEW
+    if (pageId === 'page-summary') setDefaultSummaryDate();
+    if (pageId === 'page-summary-table') loadSummaryTableData(); // NEW
+  }
+
+  // NEW: Setup all navigation buttons (sidebar, next/prev)
+  function initPageNavigation() {
+    document.querySelectorAll('.nav-button').forEach(button => {
+      // --- FIX: ลบเครื่องหมาย _ ที่ไม่ถูกต้องออก ---
+      button.addEventListener('click', () => {
+        const pageId = button.dataset.page;
+        if (pageId) {
+          showPage(pageId);
+        }
+      });
+    });
+    
+    document.getElementById('nav-toggle').addEventListener('click', () => {
+      document.getElementById('nav-links').classList.toggle('hidden');
+    });
+  }
+
+  // --- Form Submission Handlers ---
+
+  function getFormData(form) {
+    const formData = new FormData(form);
+    const data = {};
+    
+    // Initialize checkboxes as false
+    form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      data[cb.name] = false;
+    });
+
+    // Populate data
+    for (let [key, value] of formData.entries()) {
+      if (form.elements[key] && form.elements[key].type === 'checkbox') {
+        data[key] = true;
+      } else {
+        data[key] = value;
+      }
+    }
+    return data;
+  }
+
+  function submitVitals(e) {
+    e.preventDefault();
+    showLoader();
+    google.script.run.withSuccessHandler(onSaveSuccess).withFailureHandler(onSaveFailure).saveVitalData(getFormData(e.target));
+  }
+  
+  function submitActivity(e) {
+    e.preventDefault();
+    showLoader();
+    google.script.run.withSuccessHandler(onSaveSuccess).withFailureHandler(onSaveFailure).saveActivityData(getFormData(e.target));
+  }
+  
+  function submitMedication(e) {
+    e.preventDefault();
+    showLoader();
+    google.script.run.withSuccessHandler(onSaveSuccess).withFailureHandler(onSaveFailure).saveMedicationData(getFormData(e.target));
+  }
+  
+  function submitLab(e) {
+    e.preventDefault();
+    showLoader();
+    google.script.run.withSuccessHandler(onSaveSuccess).withFailureHandler(onSaveFailure).saveLabData(getFormData(e.target));
+  }
+
+  // NEW: Handle File Upload (moved from Upload.html)
+  function submitUpload(e) {
+    e.preventDefault();
+    const form = e.target;
+    const files = document.getElementById('files-input').files;
+    const category = document.getElementById('category-select').value;
+    const otherCategory = document.getElementById('other-category').value;
+    const statusDiv = document.getElementById('upload-status');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    if (files.length === 0) {
+      statusDiv.innerText = 'Please select at least one file.';
+      statusDiv.className = 'text-red-600';
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.innerHTML = 'Uploading...';
+    let filesUploaded = 0;
+    
+    Array.from(files).forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const fileData = {
+          FileName: file.name,
+          MimeType: file.type,
+          FileContent: e.target.result.split(',')[1] // Base64
+        };
+        
+        statusDiv.innerText = `Uploading file ${index + 1} of ${files.length}: ${file.name}`;
+        statusDiv.className = 'text-gray-700';
+
+        google.script.run
+          .withSuccessHandler((response) => {
+            filesUploaded++;
+            if (filesUploaded === files.length) {
+              statusDiv.innerText = `Successfully uploaded ${files.length} file(s)!`;
+              statusDiv.className = 'text-green-600 font-bold';
+              form.reset();
+              document.getElementById('other-category-div').style.display = 'none';
+              submitButton.disabled = false;
+              submitButton.innerHTML = 'Upload Files';
+            }
+          })
+          .withFailureHandler((error) => {
+            statusDiv.innerText = `Error uploading ${file.name}: ${error.message}`;
+            statusDiv.className = 'text-red-600';
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Upload Files';
+          })
+          .saveFile(fileData, category, (category === 'Other' ? otherCategory : category));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // --- Log Page Handlers ---
+
+  // MODIFIED: loadMedLog (for Pagination)
+// รับ argument 'page' เพิ่มเติม
+function loadMedLog(page = 1) { // ถ้าไม่ส่งมา ให้เริ่มที่หน้า 1
+  showLoader();
+  const timeRange = document.getElementById('medlog-timerange').value;
+  // ไม่ต้องเก็บ page ไว้ใน global ที่นี่แล้ว เพราะ renderMedLog จะอัปเดตให้
+
+  // ส่งเลขหน้า (page) ไปให้ Server ด้วย
+  google.script.run
+      .withSuccessHandler(renderMedLog) // ส่งต่อไปให้ renderMedLog จัดการ
+      .withFailureHandler(onSaveFailure)
+      .getMedicationData(timeRange, page); // *** ส่ง page ไปด้วย ***
+}
+
+// MODIFIED: renderMedLog (for Pagination)
+function renderMedLog(jsonData) {
+  // 1. Parse Object ใหม่ที่ Server ส่งมา (มี data, totalPages, currentPage)
+  const response = JSON.parse(jsonData);
+  const data = response.data;
+  // อัปเดตตัวแปร Global จากข้อมูลที่ Server ส่งมา
+  medLogCurrentPage = response.currentPage;
+  medLogTotalPages = response.totalPages;
+
+  const container = document.getElementById('medlog-container');
+
+  // ถ้าหน้านี้ไม่มีข้อมูล (อาจเกิดตอนข้อมูลหมดพอดี)
+  if (data.length === 0 && medLogCurrentPage === 1) { // เช็คเพิ่มว่าใช่หน้าแรกจริงๆรึเปล่า
+      container.innerHTML = '<p class="p-4 text-gray-500 text-center">No medication records found for this period.</p>';
+      hideLoader();
+      return;
+  }
+
+  // 2. สร้างตาราง HTML (เหมือนเดิม)
+  let html = `<div class="overflow-x-auto chart-card"><table class="min-w-full bg-white">
+    <thead class="bg-gray-100"><tr>
+      <th class="p-3 text-left text-sm font-semibold text-gray-600">Date & Time</th>
+      <th class="p-3 text-left text-sm font-semibold text-gray-600">Drug</th>
+      <th class="p-3 text-left text-sm font-semibold text-gray-600">Dose</th>
+      <th class="p-3 text-left text-sm font-semibold text-gray-600">Freq</th>
+      <th class="p-3 text-left text-sm font-semibold text-gray-600">Route</th>
+      <th class="p-3 text-left text-sm font-semibold text-gray-600">Note</th>
+    </tr></thead><tbody>`;
+
+  data.forEach(row => {
+    html += `<tr class="border-b hover:bg-gray-50">
+        <td class="p-3 whitespace-nowrap text-sm">${formatDateTime(row.RecordDateTime)}</td>
+        <td class="p-3 text-sm">${row.DrugName || ''}</td>
+        <td class="p-3 text-sm">${row.Dose || ''}</td>
+        <td class="p-3 text-sm">${row.Frequency || ''}</td>
+        <td class="p-3 text-sm">${row.Route || ''}</td>
+        <td class="p-3 text-sm">${row.Note || ''}</td>
+      </tr>`;
+  });
+  html += '</tbody></table></div>';
+
+  // 3. *** ส่วนที่เพิ่ม: สร้างปุ่ม Pagination ***
+  html += `<div class="flex justify-between items-center mt-4 px-2">`; // ใช้ flex จัดปุ่ม
+
+  // ปุ่ม Previous: แสดงเมื่อไม่ใช่หน้าแรก
+  if (medLogCurrentPage > 1) {
+    // ใส่ onclick ให้เรียก loadMedLog หน้าก่อนหน้า
+    html += `<button onclick="loadMedLog(${medLogCurrentPage - 1})" class="form-nav-button form-nav-menu text-sm py-1 px-3">
+               &larr; Previous
+             </button>`;
+  } else {
+    // ใส่ div ว่างๆ แทน เพื่อให้ปุ่ม Next อยู่ฝั่งขวา
+    html += `<div></div>`;
+  }
+
+  // ข้อความบอกหน้าปัจจุบัน
+  html += `<span class="text-sm font-medium text-gray-700">Page ${medLogCurrentPage} of ${medLogTotalPages}</span>`;
+
+  // ปุ่ม Next: แสดงเมื่อไม่ใช่หน้าสุดท้าย
+  if (medLogCurrentPage < medLogTotalPages) {
+    // ใส่ onclick ให้เรียก loadMedLog หน้าถัดไป
+    html += `<button onclick="loadMedLog(${medLogCurrentPage + 1})" class="form-nav-button form-nav-next text-sm py-1 px-3">
+               Next &rarr;
+             </button>`;
+  } else {
+    // ใส่ div ว่างๆ แทน
+    html += `<div></div>`;
+  }
+
+  html += `</div>`; // ปิด div ของ pagination buttons
+
+  // ใส่ HTML ลงใน container
+  container.innerHTML = html;
+  hideLoader();
+}
+  
+  // MODIFIED: loadLabLog (for Pagination)
+function loadLabLog(page = 1) {
+  showLoader();
+  const timeRange = document.getElementById('lablog-timerange').value;
+  // ส่งเลขหน้า (page) ไปให้ Server
+  google.script.run
+      .withSuccessHandler(renderLabLog)
+      .withFailureHandler(onSaveFailure)
+      .getLabData_Paginated(timeRange, page); // *** เรียก _Paginated และส่ง page ***
+}
+
+// MODIFIED: renderLabLog (for Pagination & Normal Values)
+function renderLabLog(jsonData) {
+  const response = JSON.parse(jsonData);
+  const data = response.data;
+  labLogCurrentPage = response.currentPage;
+  labLogTotalPages = response.totalPages;
+
+  const container = document.getElementById('lablog-container');
+  container.innerHTML = ''; // Clear previous results
+
+  if (data.length === 0 && labLogCurrentPage === 1) {
+      container.innerHTML = '<p class="p-4 text-gray-500 text-center">No lab records found for this period.</p>';
+      hideLoader();
+      return;
+  }
+
+  let html = '<div class="space-y-4">';
+  const labFields = Object.keys(LAB_NORMAL_VALUES); // ใช้ global object เดิม
+
+  data.forEach(row => {
+    html += `<div class="chart-card bg-white p-4 rounded-lg shadow">
+        <h3 class="text-lg font-bold text-secondary-700 mb-3">${formatDateTime(row.RecordDateTime)}</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3 mb-4 text-sm">`; // Smaller gaps and text
+
+    labFields.forEach(field => {
+      if (row[field] !== null && row[field] !== '') {
+        const val = parseFloat(row[field]);
+        const nv = LAB_NORMAL_VALUES[field];
+        let valClass = 'font-medium text-gray-800';
+        let nvText = '';
+        if (nv) {
+            nvText = ` <span class="text-xs text-blue-600 font-normal">(NV: ${nv.min}-${nv.max === Infinity ? '' : nv.max})</span>`;
+            if (!isNaN(val) && (val < nv.min || val > nv.max)) {
+                valClass = 'font-bold text-red-600'; // Abnormal
+            }
+        }
+
+        html += `<div>
+            <span class="text-xs text-gray-500">${field}</span>
+            <p class="${valClass}">${row[field]}${nvText}</p>
+          </div>`;
+      }
+    });
+
+    html += `</div>`; // Close grid
+    if (row.SputumCS) html += `<div class="mt-3"><h4 class="font-semibold text-sm">Sputum C/S</h4><p class="text-xs p-2 bg-gray-50 rounded mt-1">${row.SputumCS}</p></div>`;
+    if (row.CXRReport) html += `<div class="mt-3"><h4 class="font-semibold text-sm">CXR Report</h4><pre class="text-xs p-2 bg-gray-50 rounded mt-1 whitespace-pre-wrap font-sans">${row.CXRReport}</pre></div>`;
+    html += `</div>`; // Close card
+  });
+  html += `</div>`; // Close space-y-4
+
+  // --- Add Pagination Buttons ---
+  html += `<div class="flex justify-between items-center mt-4 px-2">`;
+  if (labLogCurrentPage > 1) {
+    html += `<button onclick="loadLabLog(${labLogCurrentPage - 1})" class="form-nav-button form-nav-menu text-sm py-1 px-3">&larr; Previous</button>`;
+  } else { html += `<div></div>`; }
+  html += `<span class="text-sm font-medium text-gray-700">Page ${labLogCurrentPage} of ${labLogTotalPages}</span>`;
+  if (labLogCurrentPage < labLogTotalPages) {
+    html += `<button onclick="loadLabLog(${labLogCurrentPage + 1})" class="form-nav-button form-nav-next text-sm py-1 px-3">Next &rarr;</button>`;
+  } else { html += `<div></div>`; }
+  html += `</div>`;
+  // --- End Pagination Buttons ---
+
+  container.innerHTML = html;
+  hideLoader();
+}
+
+  // MODIFIED: loadDocumentLog (for Pagination)
+function loadDocumentLog(page = 1) {
+  showLoader();
+  const timeRange = document.getElementById('doclog-timerange').value;
+  const category = document.getElementById('doclog-category').value;
+  const searchTerm = document.getElementById('doclog-search').value.toLowerCase(); // Search term is filtered client-side for now
+
+  // ส่งเลขหน้า (page) ไปให้ Server
+  google.script.run
+    .withSuccessHandler((json) => renderDocumentLog(json, searchTerm)) // Pass searchTerm to render function
+    .withFailureHandler(onSaveFailure)
+    .getDocumentLogData_Paginated(timeRange, category, page); // *** เรียก _Paginated และส่ง page ***
+}
+
+// MODIFIED: renderDocumentLog (for Pagination & client-side search filtering)
+function renderDocumentLog(jsonData, searchTerm) { // รับ searchTerm เพิ่ม
+  const response = JSON.parse(jsonData);
+  let data = response.data; // Use 'let' because we might filter it
+  docLogCurrentPage = response.currentPage;
+  docLogTotalPages = response.totalPages;
+
+  const container = document.getElementById('doclog-container');
+
+  // --- Client-side filtering based on searchTerm ---
+  if (searchTerm) {
+    data = data.filter(row => row.FileName.toLowerCase().includes(searchTerm));
+  }
+  // --- End client-side filtering ---
+
+  if (data.length === 0 && docLogCurrentPage === 1 && !searchTerm) { // Check if it's page 1 AND no search term
+      container.innerHTML = '<p class="p-4 text-gray-500 text-center">No documents found for this period and category.</p>';
+      hideLoader();
+      return;
+  }
+   if (data.length === 0 && searchTerm) { // Handle case where search yields no results
+      container.innerHTML = '<p class="p-4 text-gray-500 text-center">No documents found matching your search.</p>';
+      // Still show pagination if there might be results on other pages
+      // Or decide based on totalPages if known accurately after filtering (more complex)
+  }
+
+
+  let html = '<div class="space-y-3">';
+  data.forEach(row => {
+    html += `<a href="${row.FileURL}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 p-4 bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+        <span class="text-2xl text-secondary-600">📄</span>
+        <div class="flex-1 overflow-hidden">
+          <p class="font-semibold text-secondary-700 truncate" title="${row.FileName}">${row.FileName}</p>
+          <p class="text-sm text-gray-500">${row.SubCategory || row.Category} - ${formatDateTime(row.Timestamp)}</p>
+        </div>
+        <span class="text-secondary-500 text-lg ml-auto">&rarr;</span>
+      </a>`;
+  });
+   if (data.length === 0 && searchTerm){
+        // If search returned nothing, don't add closing div yet, let pagination show
+   } else if (data.length > 0) {
+       html += '</div>'; // Close space-y-3 only if there's data
+   }
+
+
+  // --- Add Pagination Buttons ---
+  // Show pagination even if search yields no results on this page,
+  // because totalPages reflects unfiltered count. A better approach
+  // would filter server-side if performance becomes an issue.
+  html += `<div class="flex justify-between items-center mt-4 px-2">`;
+  if (docLogCurrentPage > 1) {
+    html += `<button onclick="loadDocumentLog(${docLogCurrentPage - 1})" class="form-nav-button form-nav-menu text-sm py-1 px-3">&larr; Previous</button>`;
+  } else { html += `<div></div>`; }
+  html += `<span class="text-sm font-medium text-gray-700">Page ${docLogCurrentPage} of ${docLogTotalPages}</span>`;
+  if (docLogCurrentPage < docLogTotalPages) {
+    html += `<button onclick="loadDocumentLog(${docLogCurrentPage + 1})" class="form-nav-button form-nav-next text-sm py-1 px-3">Next &rarr;</button>`;
+  } else { html += `<div></div>`; }
+  html += `</div>`;
+  // --- End Pagination Buttons ---
+
+  container.innerHTML = html;
+  hideLoader();
+}
+
+  // NEW: Summary Tables
+  function loadSummaryTableData() {
+    showLoader();
+    const timeRange = document.getElementById('summary-table-timerange').value;
+ 
+    // --- THIS IS THE FIX ---
+    // This promise was missing from your original file
+    const labsPromise = new Promise((res, rej) => {
+      google.script.run.withSuccessHandler(res).withFailureHandler(rej).getLabComparisonData(timeRange);
+    });
+    // --- END OF FIX ---
+
+    Promise.all([vitalsPromise, labsPromise]) // Now this will work
+      .then(([vitalsJson, labsJson]) => {
+        renderVitalsSummaryTable(vitalsJson);
+        renderLabComparisonTable(labsJson);
+        hideLoader();
+      })
+      .catch(onSaveFailure);
+  }
+
+  function renderVitalsSummaryTable(jsonData) {
+    const data = JSON.parse(jsonData);
+    const container = document.getElementById('summary-vitals-table-container');
+    if (data.length === 0) {
+      container.innerHTML = '<p class="p-4 text-gray-500 text-center">No vitals data found.</p>';
+      return;
+    }
+    
+    let html = `<table class="min-w-full bg-white"><thead class="bg-gray-100"><tr>
+      <th class="p-2 text-left">Date</th>
+      <th class="p-2 text-left">BP Avg</th>
+      <th class="p-2 text-left">I/O Bal</th>
+      <th class="p-2 text-left">Weight</th>
+      <th class="p-2 text-left">Wean</th>
+      <th class="p-2 text-left">Sleep (D/N)</th>
+      <th class="p-2 text-left">Apnea (D/N)</th>
+      <th class="p-2 text-left">PRN</th>
+      <th class="p-2 text-left">CC</th>
+      </tr></thead><tbody>`;
+      
+    data.forEach(row => {
+      html += `<tr class="border-b hover:bg-gray-50 text-sm">
+        <td class="p-2 whitespace-nowrap">${row.date}</td>
+        <td class="p-2">${row.bp}</td>
+        <td class="p-2 ${row.ioBalance > 0 ? 'text-green-600' : 'text-red-600'}">${row.ioBalance}</td>
+        <td class="p-2">${row.weight || 'N/A'}</td>
+        <td class="p-2">${row.tryWean} min</td>
+        <td class="p-2">${row.sleepDay} / ${row.sleepNight} hr</td>
+        <td class="p-2">${row.apneaDay} / ${row.apneaNight}</td>
+        <td class="p-2 truncate max-w-xs" title="${row.prn}">${row.prn || 'N/A'}</td>
+        <td class="p-2 truncate max-w-xs" title="${row.cc}">${row.cc || 'N/A'}</td>
+      </tr>`;
+    });
+    container.innerHTML = html + '</tbody></table>';
+  }
+
+  function renderLabComparisonTable(jsonData) {
+    const { headers, data } = JSON.parse(jsonData);
+    const container = document.getElementById('summary-lab-table-container');
+    if (data.length === 0) {
+      container.innerHTML = '<p class="p-4 text-gray-500 text-center">No lab data found.</p>';
+      return;
+    }
+
+    // Ensure 'date' is the first header
+    const sortedHeaders = ['date', ...headers.filter(h => h !== 'date' && h !== 'Timestamp' && h !== 'RecordDateTime' && !h.includes('Report'))];
+    
+    let html = `<table class="min-w-full bg-white"><thead class="bg-gray-100"><tr>`;
+    sortedHeaders.forEach(h => html += `<th class="p-2 text-left text-xs">${h}</th>`);
+    html += '</tr></thead><tbody>';
+
+    data.forEach(row => {
+      html += '<tr class="border-b hover:bg-gray-50 text-sm">';
+      sortedHeaders.forEach(header => {
+        const val = row[header];
+        let valClass = 'p-2 whitespace-nowrap';
+        if (header !== 'date' && val) {
+          const nv = LAB_NORMAL_VALUES[header];
+          if (nv && (val < nv.min || val > nv.max)) {
+            valClass += ' text-red-600 font-bold';
+          }
+        }
+        html += `<td class="${valClass}">${val || ''}</td>`;
+      });
+      html += '</tr>';
+    });
+    container.innerHTML = html + '</tbody></table>';
+  }
+
+  // --- Dashboard Page Handlers (NEW - Replaces all old dashboard code) ---
+
+  // Helper to destroy a chart instance
+  function destroyChart(chartName) {
+    if (charts[chartName]) {
+      charts[chartName].destroy();
+      delete charts[chartName];
+    }
+  }
+  
+  // Helper for processing data
+  const chartHelpers = {
+    // Process data for simple line charts (Temp, HR, SpO2, BW)
+    processSimpleTrend: (data, key) => {
+      return data
+        .map(d => ({ x: new Date(d.RecordDateTime), y: parseFloat(d[key]) }))
+        .filter(d => !isNaN(d.y));
+    },
+    // Process data for daily average (BP)
+    processDailyAvg: (data, keySys, keyDia) => {
+      const daily = {};
+      data.forEach(d => {
+        const day = d.RecordDateTime.split('T')[0];
+        if (!daily[day]) daily[day] = { sys: [], dia: [] };
+        const sys = parseFloat(d[keySys]);
+        const dia = parseFloat(d[keyDia]);
+        if (!isNaN(sys)) daily[day].sys.push(sys);
+        if (!isNaN(dia)) daily[day].dia.push(dia);
+      });
+      return Object.keys(daily).sort().map(day => {
+        const sysAvg = daily[day].sys.length ? daily[day].sys.reduce((a,b) => a+b, 0) / daily[day].sys.length : null;
+        const diaAvg = daily[day].dia.length ? daily[day].dia.reduce((a,b) => a+b, 0) / daily[day].dia.length : null;
+        return { x: new Date(day), ySys: sysAvg, yDia: diaAvg };
+      });
+    },
+    // Process data for daily sum (I/O, Wean, Suction, Mobility)
+    processDailySum: (data, keys) => {
+      const daily = {};
+      data.forEach(d => {
+        const day = d.RecordDateTime.split('T')[0];
+        if (!daily[day]) daily[day] = {};
+        keys.forEach(key => {
+          if (!daily[day][key]) daily[day][key] = 0;
+          daily[day][key] += parseFloat(d[key]) || 0;
+        });
+      });
+      const labels = Object.keys(daily).sort();
+      const datasets = keys.map(key => ({
+        key: key,
+        data: labels.map(day => daily[day][key])
+      }));
+      return { labels, datasets };
+    }
+  };
+
+  // Generic Chart Renderer
+  function renderChart(canvasId, chartName, config) {
+    destroyChart(chartName);
+    const ctx = document.getElementById(canvasId);
+    if (ctx) {
+      charts[chartName] = new Chart(ctx.getContext('2d'), config);
+    }
+  }
+
+  // Vitals Chart Renders (x9)
+  function renderChartTemp(data) {
+    renderChart('chart-temp', 'chartTemp', {
+      type: 'line',
+      data: { datasets: [{
+        label: 'Temp (°C)', data: chartHelpers.processSimpleTrend(data, 'Temperature'),
+        borderColor: '#ef4444', yAxisID: 'y'
+      }]},
+      options: { scales: { x: { type: 'time' }, y: { title: { display: true, text: '°C' } } } }
+    });
+  }
+  
+  function renderChartBP(data) {
+    const bpData = chartHelpers.processDailyAvg(data, 'BPSystolic', 'BPDiastolic');
+    renderChart('chart-bp', 'chartBP', {
+      type: 'line',
+      data: {
+        labels: bpData.map(d => d.x),
+        datasets: [
+          { label: 'Systolic', data: bpData.map(d => d.ySys), borderColor: '#f43f5e' },
+          { label: 'Diastolic', data: bpData.map(d => d.yDia), borderColor: '#60a5fa' }
+        ]
+      },
+      options: { scales: { x: { type: 'time', time: { unit: 'day' } }, y: { title: { display: true, text: 'mmHg' } } } }
+    });
+  }
+
+  function renderChartHR(data) {
+    renderChart('chart-hr', 'chartHR', {
+      type: 'line',
+      data: { datasets: [{
+        label: 'HR (bpm)', data: chartHelpers.processSimpleTrend(data, 'HeartRate'),
+        borderColor: '#ec4899', yAxisID: 'y'
+      }]},
+      options: { scales: { x: { type: 'time' }, y: { title: { display: true, text: 'bpm' } } } }
+    });
+  }
+
+  function renderChartSpO2(data) {
+    renderChart('chart-spo2', 'chartSpO2', {
+      type: 'line',
+      data: { datasets: [{
+        label: 'SpO₂ (%)', data: chartHelpers.processSimpleTrend(data, 'SpO2'),
+        borderColor: '#0ea5e9', yAxisID: 'y'
+      }]},
+      options: { scales: { x: { type: 'time' }, y: { title: { display: true, text: '%' }, suggestedMin: 88 } } }
+    });
+  }
+
+  function renderChartIO(data) {
+    const ioData = chartHelpers.processDailySum(data, ['Intake', 'OutputUrine', 'OutputStool', 'OutputSuction']);
+    const intake = ioData.datasets.find(d => d.key === 'Intake').data;
+    const output = ioData.labels.map((_, i) => 
+      (ioData.datasets.find(d => d.key === 'OutputUrine').data[i] || 0) +
+      (ioData.datasets.find(d => d.key === 'OutputStool').data[i] || 0) +
+      (ioData.datasets.find(d => d.key === 'OutputSuction').data[i] || 0)
+    );
+    const balance = intake.map((val, i) => val - output[i]);
+    
+    renderChart('chart-io', 'chartIO', {
+      type: 'bar',
+      data: {
+        labels: ioData.labels,
+        datasets: [
+          { label: 'Intake', data: intake, backgroundColor: '#3b82f6' },
+          { label: 'Output', data: output, backgroundColor: '#ef4444' },
+          { label: 'Balance', data: balance, type: 'line', borderColor: '#10b981', yAxisID: 'y1' }
+        ]
+      },
+      options: { scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'ml' } }, y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Balance' } } } }
+    });
+  }
+
+  function renderChartSuction(data) {
+    const suctionData = chartHelpers.processDailySum(data, ['OutputSuction']);
+    renderChart('chart-suction', 'chartSuction', {
+      type: 'bar',
+      data: { labels: suctionData.labels, datasets: [{
+        label: 'Suction (ml)', data: suctionData.datasets[0].data, backgroundColor: '#a855f7'
+      }]},
+      options: { scales: { x: { title: { text: 'Date' } }, y: { title: { display: true, text: 'ml' } } } }
+    });
+  }
+
+  function renderChartBW(data) {
+    renderChart('chart-bw', 'chartBW', {
+      type: 'line',
+      data: { datasets: [{
+        label: 'Weight (kg)', data: chartHelpers.processSimpleTrend(data, 'Weight'),
+        borderColor: '#6b7280', yAxisID: 'y'
+      }]},
+      options: { scales: { x: { type: 'time' }, y: { title: { display: true, text: 'kg' } } } }
+    });
+  }
+
+  function renderChartWean(data) {
+    const weanData = chartHelpers.processDailySum(data, ['TryWeanMin']);
+    renderChart('chart-wean', 'chartWean', {
+      type: 'bar',
+      data: { labels: weanData.labels, datasets: [{
+        label: 'Wean (min)', data: weanData.datasets[0].data, backgroundColor: '#22c55e'
+      }]},
+      options: { scales: { x: { title: { text: 'Date' } }, y: { title: { display: true, text: 'minutes' } } } }
+    });
+  }
+
+  function renderChartMobility(data) {
+    const mobData = chartHelpers.processDailySum(data, ['SittingTimeMin', 'StandingTimeMin', 'WalkingSteps']);
+    renderChart('chart-mobility', 'chartMobility', {
+      type: 'line',
+      data: {
+        labels: mobData.labels,
+        datasets: [
+          { label: 'Sitting (min)', data: mobData.datasets.find(d => d.key === 'SittingTimeMin').data, borderColor: '#f97316', yAxisID: 'yMin' },
+          { label: 'Standing (min)', data: mobData.datasets.find(d => d.key === 'StandingTimeMin').data, borderColor: '#14b8a6', yAxisID: 'yMin' },
+          { label: 'Walking (steps)', data: mobData.datasets.find(d => d.key === 'WalkingSteps').data, borderColor: '#0ea5e9', yAxisID: 'ySteps', borderDash: [5, 5] }
+        ]
+      },
+      options: {
+        scales: {
+          x: { title: { text: 'Date' } },
+          yMin: { position: 'left', title: { display: true, text: 'Minutes' } },
+          ySteps: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Steps' } }
+        }
+      }
+    });
+  }
+  
+  // Lab Chart Generic Renderer
+  function loadLabChart(labName, chartName, canvasId) {
+    const timeRange = document.getElementById('dashboard-timerange').value;
+    google.script.run
+      .withSuccessHandler(json => {
+        renderChart(canvasId, chartName, {
+          type: 'line',
+          data: { datasets: [{
+            label: labName, data: JSON.parse(json), borderColor: '#14b8a6'
+          }]},
+          options: { scales: { x: { type: 'time', time: { unit: 'day' } }, y: { title: { display: true, text: 'Value' } } } }
+        });
+      })
+      .withFailureHandler(onSaveFailure)
+      .getLabTrendData(labName, timeRange);
+  }
+
+  // Main Dashboard Load Function
+  function loadDashboardData() {
+    showLoader();
+    const timeRange = document.getElementById('dashboard-timerange').value;
+    
+    const vitalsPromise = new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).getVitalsDashboardData(timeRange));
+    const activityPromise = new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).getActivityDashboardData(timeRange));
+    
+    Promise.all([vitalsPromise, activityPromise])
+      .then(([vitalsJson, activityJson]) => {
+        const vitalsData = JSON.parse(vitalsJson);
+        const activityData = JSON.parse(activityJson);
+        
+        // Render all Vitals charts
+        renderChartTemp(vitalsData);
+        renderChartBP(vitalsData);
+        renderChartHR(vitalsData);
+        renderChartSpO2(vitalsData);
+        renderChartIO(vitalsData);
+        renderChartSuction(vitalsData);
+        renderChartBW(vitalsData);
+        renderChartWean(vitalsData);
+        renderChartMobility(activityData);
+        
+        // Load default lab charts
+        loadAllLabCharts();
+        
+        hideLoader();
+      })
+      .catch(onSaveFailure);
+  }
+  
+  function loadAllLabCharts() {
+    loadLabChart(document.getElementById('lab-select-cbc').value, 'labChartCBC', 'chart-lab-cbc');
+    loadLabChart(document.getElementById('lab-select-lft').value, 'labChartLFT', 'chart-lab-lft');
+    loadLabChart(document.getElementById('lab-select-renal').value, 'labChartRenal', 'chart-lab-renal');
+    loadLabChart(document.getElementById('lab-select-vitamins').value, 'labChartVitamins', 'chart-lab-vitamins');
+  }
+
+  // Dashboard Tab/Picker Initializers
+  function initDashboardTabs() {
+    const tabs = document.querySelectorAll('.tab-button');
+    const contents = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        contents.forEach(c => c.classList.toggle('hidden', c.id !== `tab-content-${tab.dataset.tab}`));
+      });
+    });
+  }
+  
+  function initDashboardLabPickers() {
+    document.getElementById('lab-select-cbc').addEventListener('change', (e) => loadLabChart(e.target.value, 'labChartCBC', 'chart-lab-cbc'));
+    document.getElementById('lab-select-lft').addEventListener('change', (e) => loadLabChart(e.target.value, 'labChartLFT', 'chart-lab-lft'));
+    document.getElementById('lab-select-renal').addEventListener('change', (e) => loadLabChart(e.target.value, 'labChartRenal', 'chart-lab-renal'));
+    document.getElementById('lab-select-vitamins').addEventListener('change', (e) => loadLabChart(e.target.value, 'labChartVitamins', 'chart-lab-vitamins'));
+  }
+
+  // --- Summary Page (Old) Handlers ---
+  
+  function setDefaultSummaryDate() {
+    const datePicker = document.getElementById('summary-date-picker');
+    if (!datePicker.value) {
+      datePicker.value = new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  function loadSummary() {
+    showLoader();
+    const dateString = document.getElementById('summary-date-picker').value;
+    if (!dateString) {
+      hideLoader();
+      showNotification('Please select a date first.', 'error');
+      return;
+    }
+    // Clear old
+    document.getElementById('summary-vitals-body').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Loading...</td></tr>';
+    document.getElementById('summary-io-body').innerHTML = '<tr><td colspan="2" class="p-4 text-center text-gray-500">Loading...</td></tr>';
+    document.getElementById('summary-clinical').innerHTML = '<li>Loading...</li>';
+    document.getElementById('summary-activity').innerHTML = '<li>Loading...</li>';
+    document.getElementById('summary-behavior').innerHTML = '<li>Loading...</li>';
+    document.getElementById('summary-meds-body').innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading...</td></tr>';
+
+    google.script.run.withSuccessHandler(renderSummary).withFailureHandler(onSaveFailure).getDailySummaryData(dateString);
+  }
+  
+  // MODIFIED: Fixed bug and added new fields
+  function renderSummary(jsonData) {
+    const data = JSON.parse(jsonData);
+    const fNum = (num, dec = 1) => (num !== null && num !== undefined) ? num.toFixed(dec) : 'N/A';
+    const fStr = (str) => str || 'N/A';
+    
+    // Vitals Table (FIXED the template literal bug)
+    const vitalsBody = document.getElementById('summary-vitals-body');
+    vitalsBody.innerHTML = `
+      <tr>
+        <td class="p-2 border">Weight (kg)</td>
+        <td class="p-2 border">${fNum(data.vitals.Weight.avg)}</td>
+        <td class="p-2 border">${fNum(data.vitals.Weight.max)}</td>
+        <td class="p-2 border">${fNum(data.vitals.Weight.min)}</td>
+        <td class="p-2 border">${fNum(data.vitals.Weight.latest)}</td>
+      </tr>
+      <tr>
+        <td class="p-2 border">Temp (°C)</td>
+        <td class="p-2 border">${fNum(data.vitals.Temperature.avg)}</td>
+        <td class="p-2 border">${fNum(data.vitals.Temperature.max)}</td>
+        <td class="p-2 border">${fNum(data.vitals.Temperature.min)}</td>
+        <td class="p-2 border">${fNum(data.vitals.Temperature.latest)}</td>
+      </tr>
+      <tr>
+        <td class="p-2 border">BP Sys</td>
+        <td class="p-2 border">${fNum(data.vitals.BPSystolic.avg, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.BPSystolic.max, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.BPSystolic.min, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.BPSystolic.latest, 0)}</td>
+      </tr>
+      <tr>
+        <td class="p-2 border">BP Dia</td>
+        <td class="p-2 border">${fNum(data.vitals.BPDiastolic.avg, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.BPDiastolic.max, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.BPDiastolic.min, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.BPDiastolic.latest, 0)}</td>
+      </tr>
+      <tr>
+        <td class="p-2 border">Heart Rate</td>
+        <td class="p-2 border">${fNum(data.vitals.HeartRate.avg, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.HeartRate.max, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.HeartRate.min, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.HeartRate.latest, 0)}</td>
+      </tr>
+      <tr>
+        <td class="p-2 border">Resp Rate</td>
+        <td class="p-2 border">${fNum(data.vitals.RespiratoryRate.avg, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.RespiratoryRate.max, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.RespiratoryRate.min, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.RespiratoryRate.latest, 0)}</td>
+      </tr>
+      <tr>
+        <td class="p-2 border">SpO₂ (%)</td>
+        <td class="p-2 border">${fNum(data.vitals.SpO2.avg, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.SpO2.max, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.SpO2.min, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.SpO2.latest, 0)}</td>
+      </tr>
+      <tr>
+        <td class="p-2 border">GCS</td>
+        <td class="p-2 border">${fNum(data.vitals.GCS.avg, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.GCS.max, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.GCS.min, 0)}</td>
+        <td class="p-2 border">${fNum(data.vitals.GCS.latest, 0)}</td>
+      </tr>
+    `;
+    
+    // I/O Table
+    document.getElementById('summary-io-body').innerHTML = `
+      <tr><td class="p-2 border font-medium">Total Intake</td><td class="p-2 border">${fNum(data.io.intake, 0)} ml</td></tr>
+      <tr><td class="p-2 border">Total Urine</td><td class="p-2 border">${fNum(data.io.outputUrine, 0)} ml</td></tr>
+      <tr><td class="p-2 border">Total Stool</td><td class="p-2 border">${fNum(data.io.outputStool, 0)} ml</td></tr>
+      <tr><td class="p-2 border">Total Suction</td><td class="p-2 border">${fNum(data.io.outputSuction, 0)} ml</td></tr>
+      <tr class="font-bold ${data.io.balance >= 0 ? 'text-green-700' : 'text-red-700'}">
+        <td class="p-2 border">Balance</td><td class="p-2 border">${data.io.balance >= 0 ? '+' : ''}${fNum(data.io.balance, 0)} ml</td>
+      </tr>
+      <tr><td class="p-2 border">Stool Count</td><td class="p-2 border">${data.io.stoolCount} ครั้ง</td></tr>
+      <tr><td class="p-2 border">Stool Colors</td><td class="p-2 border">${data.io.stoolColors.join(', ') || 'N/A'}</td></tr>
+      <tr><td class="p-2 border">Stool Types</td><td class="p-2 border">${data.io.stoolTypes.join(', ') || 'N/A'}</td></tr>
+      <tr><td class="p-2 border">Secretion Colors</td><td class="p-2 border">${data.io.secretionColors.join(', ') || 'N/A'}</td></tr>
+    `;
+    
+    // Activity Summary (MODIFIED)
+    document.getElementById('summary-activity').innerHTML = `
+      <li>Total Sitting: <strong>${fNum(data.activity.sitting, 0)}</strong> min</li>
+      <li>Total Standing: <strong>${fNum(data.activity.standing, 0)}</strong> min</li>
+      <li>Total Walking: <strong>${fNum(data.activity.walking, 0)}</strong> steps</li>
+      <li>PT Done: ${data.activity.pt.join(', ') || 'None'}</li>
+      <li>OT Done: ${data.activity.ot.join(', ') || 'None'}</li>
+      <li>PT Notes: ${data.activity.ptNotes.join('; ') || 'None'}</li>
+      <li>OT Notes: ${data.activity.otNotes.join('; ') || 'None'}</li>
+    `;
+    
+    // Behavior Summary (MODIFIED)
+    document.getElementById('summary-behavior').innerHTML = `
+      <li>Apnea (Day): <strong>${data.behavior.apneaDay}</strong> ครั้ง</li>
+      <li>Apnea (Night): <strong>${data.behavior.apneaNight}</strong> ครั้ง</li>
+      <li>Sleep (Day): <strong>${fNum(data.behavior.sleepDay, 1)}</strong> hr</li>
+      <li>Sleep (Night): <strong>${fNum(data.behavior.sleepNight, 1)}</strong> hr</li>
+      <li>Delirium Times: ${data.behavior.deliriumTimes.join(', ') || 'None'}</li>
+      <li>Symptoms: ${data.behavior.symptoms.join(', ') || 'None'}</li>
+      <li>PRN Meds: ${data.behavior.prn.length > 0 ? data.behavior.prn.join('; ') : 'None'}</li>
+      <li>Chief Complaints: ${data.behavior.cc.length > 0 ? data.behavior.cc.join('; ') : 'None'}</li>
+    `;
+
+    // Clinical Summary (MODIFIED)
+    document.getElementById('summary-clinical').innerHTML = `
+      <li>Latest Weight: <strong>${fNum(data.clinical.weight, 1)} kg</strong></li>
+      <li>Total Try Wean: <strong>${data.clinical.tryWean}</strong> min</li>
+      <li>Latest Rash: ${fStr(data.clinical.latest.rash)}</li>
+      <li>Latest Lung Sound: ${fStr(data.clinical.latest.lung)}</li>
+      <li>Latest Edema: ${fStr(data.clinical.latest.edema)}</li>
+    `;
+    
+    // Meds Table
+    const medsBody = document.getElementById('summary-meds-body');
+    if (data.meds.length > 0) {
+      medsBody.innerHTML = data.meds.map(med => `
+        <tr class="border-b">
+          <td class="p-2">${med.time}</td>
+          <td class="p-2">${med.name}</td>
+          <td class="p-2">${med.dose} (${med.route})</td>
+          <td class="p-2">${med.note || ''}</td>
+        </tr>
+      `).join('');
+    } else {
+      medsBody.innerHTML = '<tr><td colspan="4" class="p-2 text-gray-500">No medication given this day.</td></tr>';
+    }
+    
+    hideLoader();
+  }
+  
+  // (Export function remains largely the same, but we can make it more robust)
+  function exportSummaryToClipboard() {
+    const selectedDate = document.getElementById('summary-date-picker').value;
+    let text = `📋 DAILY SUMMARY REPORT\n📅 ${selectedDate}\n\n`;
+
+    // Vitals
+    text += "🩺 VITAL SIGNS\n";
+    document.querySelectorAll('#summary-vitals-body tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 5) text += `• ${cells[0].innerText}: ${cells[4].innerText} (Avg ${cells[1].innerText})\n`;
+    });
+    text += "\n";
+
+    // I/O
+    text += "💧 I/O BALANCE\n";
+    document.querySelectorAll('#summary-io-body tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 2) text += `• ${cells[0].innerText}: ${cells[1].innerText}\n`;
+    });
+    text += "\n";
+    
+    // Clinical
+    text += "🏥 CLINICAL\n";
+    document.querySelectorAll('#summary-clinical li').forEach(li => text += `• ${li.innerText}\n`);
+    text += "\n";
+
+    // Activity
+    text += "⚡ ACTIVITY\n";
+    document.querySelectorAll('#summary-activity li').forEach(li => text += `• ${li.innerText}\n`);
+    text += "\n";
+
+    // Behavior
+    text += "😊 BEHAVIOR\n";
+    document.querySelectorAll('#summary-behavior li').forEach(li => text += `• ${li.innerText}\n`);
+    text += "\n";
+
+    // Meds
+    text += "💊 MEDICATIONS\n";
+    const medsRows = document.querySelectorAll('#summary-meds-body tr');
+    if (medsRows.length > 0) {
+      medsRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length > 1) {
+          text += `• (${cells[0].innerText}) ${cells[1].innerText} - ${cells[2].innerText} ${cells[3].innerText || ''}\n`;
+        } else {
+          text += `• ${cells[0].innerText}\n`;
+        }
+      });
+    } else { text += "No medication given.\n"; }
+
+    navigator.clipboard.writeText(text).then(() => {
+        showNotification('Copied to clipboard!', 'success');
+    }).catch(err => {
+        showNotification('Failed to copy.', 'error');
+    });
+}
+
+  // --- Event Listeners ---
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- Init ---
+    startClock();
+    initPageNavigation();
+    initDashboardTabs();
+    initDashboardLabPickers();
+    resetAllForms();
+    setDefaultSummaryDate();
+    showPage('page-home'); // Show home page on load
+
+    // --- Navigation ---
+    document.getElementById('logout-button').addEventListener('click', logout);
+
+    // --- Form Submissions ---
+    document.getElementById('form-vitals').addEventListener('submit', submitVitals);
+    document.getElementById('form-activity').addEventListener('submit', submitActivity);
+    document.getElementById('form-medication').addEventListener('submit', submitMedication);
+    document.getElementById('form-lab').addEventListener('submit', submitLab);
+    document.getElementById('form-upload').addEventListener('submit', submitUpload);
+    
+    // --- Log Page Buttons ---
+    document.getElementById('load-medlog').addEventListener('click', loadMedLog);
+    document.getElementById('load-lablog').addEventListener('click', loadLabLog);
+    document.getElementById('load-doclog').addEventListener('click', loadDocumentLog);
+    
+    // --- Dashboard Buttons ---
+    document.getElementById('load-dashboard').addEventListener('click', loadDashboardData);
+    
+    // --- Summary Page (Old) ---
+    document.getElementById('summary-btn-load').addEventListener('click', loadSummary);
+    document.getElementById('summary-btn-export').addEventListener('click', exportSummaryToClipboard);
+
+    // --- Summary Table (New) ---
+    document.getElementById('load-summary-table').addEventListener('click', loadSummaryTableData);
+
+    // --- Mobile Hint ---
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    if (isMobile && !isStandalone) {
+      document.getElementById('mobile-hint').style.display = 'block';
+    }
+    document.getElementById('close-hint').addEventListener('click', () => {
+      document.getElementById('mobile-hint').style.display = 'none';
+    });
+    
+  });
+
+</script>
