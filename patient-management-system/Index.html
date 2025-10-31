@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Management System</title>
+  <?!= include('Stylesheet'); ?>
+</head>
+<body class="bg-gray-50">
+
+  <!-- Navigation Bar -->
+  <nav class="bg-blue-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <h1 class="text-2xl font-bold">Patient Management System</h1>
+        </div>
+        <button id="btnInitSheets" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg transition">
+          Initialize Sheets
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="container mx-auto px-4 py-6">
+
+    <!-- Patient Selection Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2">เลือกผู้ป่วย (HN)</label>
+          <div class="flex gap-2">
+            <select id="selectPatient" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="">-- เลือกผู้ป่วย --</option>
+            </select>
+            <button id="btnRefreshPatients" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div>
+          <button id="btnManagePatient" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition shadow">
+            + จัดการข้อมูลผู้ป่วย
+          </button>
+        </div>
+      </div>
+
+      <!-- Patient Info Display -->
+      <div id="patientInfo" class="mt-4 p-4 bg-blue-50 rounded-lg hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <span class="font-semibold">ชื่อ:</span>
+            <span id="patientName" class="ml-2"></span>
+          </div>
+          <div>
+            <span class="font-semibold">อายุ:</span>
+            <span id="patientAge" class="ml-2"></span>
+          </div>
+          <div>
+            <span class="font-semibold">Dx:</span>
+            <span id="patientDx" class="ml-2"></span>
+          </div>
+          <div>
+            <span class="font-semibold">Allergies:</span>
+            <span id="patientAllergies" class="ml-2 text-red-600 font-semibold"></span>
+          </div>
+          <div>
+            <span class="font-semibold">Admission:</span>
+            <span id="patientAdmission" class="ml-2"></span>
+          </div>
+          <div>
+            <span class="font-semibold">Status:</span>
+            <span id="patientStatus" class="ml-2"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+      <div class="border-b border-gray-200">
+        <nav class="flex flex-wrap -mb-px" id="mainTabs">
+          <button class="tab-button active" data-tab="dashboard">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Dashboard
+          </button>
+          <button class="tab-button" data-tab="vitals">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+            Vital Signs
+          </button>
+          <button class="tab-button" data-tab="io">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+            I/O
+          </button>
+          <button class="tab-button" data-tab="clinical">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Clinical
+          </button>
+          <button class="tab-button" data-tab="medication">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+            </svg>
+            Medication
+          </button>
+          <button class="tab-button" data-tab="activity">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            Activity
+          </button>
+          <button class="tab-button" data-tab="behavior">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Behavior
+          </button>
+          <button class="tab-button" data-tab="lab">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+            </svg>
+            Lab
+          </button>
+          <button class="tab-button" data-tab="mar">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+            </svg>
+            MAR
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="tabContent">
+
+      <!-- Dashboard Tab -->
+      <div id="tab-dashboard" class="tab-content active">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Daily Summary -->
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+              <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+              Daily Summary
+            </h2>
+            <div id="dailySummary" class="space-y-4">
+              <p class="text-gray-500">กรุณาเลือกผู้ป่วยเพื่อแสดงข้อมูล</p>
+            </div>
+          </div>
+
+          <!-- Abnormal Labs Alert -->
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+              <svg class="w-6 h-6 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+              Abnormal Lab Results
+            </h2>
+            <div id="abnormalLabs" class="space-y-2">
+              <p class="text-gray-500">ไม่มีผลแลปผิดปกติ</p>
+            </div>
+          </div>
+
+          <!-- Vital Signs Chart -->
+          <div class="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
+            <h2 class="text-xl font-bold mb-4">Vital Signs Trend</h2>
+            <canvas id="chartVitals" height="80"></canvas>
+          </div>
+
+          <!-- I/O Balance Chart -->
+          <div class="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
+            <h2 class="text-xl font-bold mb-4">Intake/Output Balance</h2>
+            <canvas id="chartIO" height="80"></canvas>
+          </div>
+
+          <!-- Current Medications -->
+          <div class="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold">Current Medications</h2>
+              <button id="btnViewMedLog" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                View Medication Log →
+              </button>
+            </div>
+            <div id="currentMedications" class="overflow-x-auto">
+              <p class="text-gray-500">ไม่มีข้อมูลยา</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Vital Signs Form -->
+      <div id="tab-vitals" class="tab-content">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-6">บันทึก Vital Signs</h2>
+          <form id="formVitals" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                <input type="date" name="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">เวลา</label>
+                <input type="time" name="time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Temp (°C)</label>
+                <input type="number" name="temp" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="36.5">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">HR (bpm)</label>
+                <input type="number" name="hr" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="80">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">RR (bpm)</label>
+                <input type="number" name="rr" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="20">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">BP (mmHg)</label>
+                <input type="text" name="bp" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="120/80">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">SpO₂ (%)</label>
+                <input type="number" name="spo2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="98">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">O₂ Support</label>
+                <select name="o2Support" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="">-- เลือก --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">O₂ Flow (L/min)</label>
+                <input type="number" name="o2Flow" step="0.5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="2">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Pain Score (0-10)</label>
+                <input type="number" name="painScore" min="0" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">GCS</label>
+                <input type="text" name="gcs" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="E4V5M6">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recorded By</label>
+                <input type="text" name="recordedBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อผู้บันทึก">
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="reset" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Clear</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Vital Signs</button>
+            </div>
+          </form>
+
+          <!-- Recent Vitals -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Recent Vital Signs</h3>
+            <div id="recentVitals" class="overflow-x-auto">
+              <p class="text-gray-500">ไม่มีข้อมูล</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- I/O Form -->
+      <div id="tab-io" class="tab-content">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-6">บันทึก Intake/Output</h2>
+          <form id="formIO" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                <input type="date" name="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">เวลา</label>
+                <input type="time" name="time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Intake (mL)</label>
+                <input type="number" name="intake" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Output (mL)</label>
+                <input type="number" name="output" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Urine (mL)</label>
+                <input type="number" name="urine" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Stool Type</label>
+                <select name="stoolType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="">-- เลือก --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Stool Color</label>
+                <select name="stoolColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="">-- เลือก --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Stool Amount</label>
+                <input type="text" name="stoolAmount" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="น้อย/ปานกลาง/มาก">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Vomit (mL)</label>
+                <input type="number" name="vomit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Drain (mL)</label>
+                <input type="number" name="drain" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Other</label>
+                <input type="text" name="other" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="อื่นๆ">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recorded By</label>
+                <input type="text" name="recordedBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อผู้บันทึก">
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="reset" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Clear</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save I/O</button>
+            </div>
+          </form>
+
+          <!-- Recent I/O -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Recent I/O Records</h3>
+            <div id="recentIO" class="overflow-x-auto">
+              <p class="text-gray-500">ไม่มีข้อมูล</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clinical Notes Form -->
+      <div id="tab-clinical" class="tab-content">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-6">บันทึก Clinical Note</h2>
+          <form id="formClinical" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                <input type="date" name="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">เวลา</label>
+                <input type="time" name="time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Chief Complaint</label>
+                <textarea name="chiefComplaint" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="อาการสำคัญที่ผู้ป่วยบ่น"></textarea>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Assessment</label>
+                <textarea name="assessment" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="การประเมินอาการ"></textarea>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                <textarea name="plan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="แผนการดูแล"></textarea>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                <textarea name="note" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="หมายเหตุเพิ่มเติม"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recorded By</label>
+                <input type="text" name="recordedBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อผู้บันทึก">
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="reset" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Clear</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Clinical Note</button>
+            </div>
+          </form>
+
+          <!-- Recent Clinical Notes -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Recent Clinical Notes</h3>
+            <div id="recentClinical" class="space-y-4">
+              <p class="text-gray-500">ไม่มีข้อมูล</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medication Form -->
+      <div id="tab-medication" class="tab-content">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-6">จัดการยา</h2>
+          <form id="formMedication" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อยา</label>
+                <input type="text" name="medName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อยา">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Dose</label>
+                <input type="text" name="dose" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="500 mg">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                <select name="frequency" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                  <option value="">-- เลือก --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Route</label>
+                <select name="route" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                  <option value="">-- เลือก --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input type="date" name="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input type="date" name="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="Active">Active</option>
+                  <option value="Discontinued">Discontinued</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Indication</label>
+                <input type="text" name="indication" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="เหตุผลในการใช้ยา">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recorded By</label>
+                <input type="text" name="recordedBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อผู้บันทึก">
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="reset" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Clear</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Add Medication</button>
+            </div>
+          </form>
+
+          <!-- Current Medications List -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Current Medications</h3>
+            <div id="medicationList" class="overflow-x-auto">
+              <p class="text-gray-500">ไม่มีข้อมูลยา</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Form -->
+      <div id="tab-activity" class="tab-content">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-6">บันทึก Activity</h2>
+          <form id="formActivity" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                <input type="date" name="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">เวลา</label>
+                <input type="time" name="time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Activity Type</label>
+                <input type="text" name="activityType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="เดิน, นั่งเก้าอี้, ฯลฯ">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
+                <input type="number" name="duration" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="15">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Distance (m)</label>
+                <input type="number" name="distance" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="50">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recorded By</label>
+                <input type="text" name="recordedBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อผู้บันทึก">
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                <textarea name="note" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="หมายเหตุ"></textarea>
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="reset" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Clear</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Activity</button>
+            </div>
+          </form>
+
+          <!-- Recent Activities -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Recent Activities</h3>
+            <div id="recentActivities" class="overflow-x-auto">
+              <p class="text-gray-500">ไม่มีข้อมูล</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Behavior Form -->
+      <div id="tab-behavior" class="tab-content">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-6">บันทึก Behavior</h2>
+          <form id="formBehavior" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                <input type="date" name="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">เวลา</label>
+                <input type="time" name="time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Behavior Type</label>
+                <input type="text" name="behaviorType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="Agitation, Confusion, ฯลฯ">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                <select name="severity" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="">-- เลือก --</option>
+                  <option value="Mild">Mild</option>
+                  <option value="Moderate">Moderate</option>
+                  <option value="Severe">Severe</option>
+                </select>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Trigger</label>
+                <input type="text" name="trigger" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="สิ่งกระตุ้น/สาเหตุ">
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Intervention</label>
+                <textarea name="intervention" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="การแทรกแซง"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Outcome</label>
+                <input type="text" name="outcome" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="ผลลัพธ์">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recorded By</label>
+                <input type="text" name="recordedBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อผู้บันทึก">
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="reset" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Clear</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Behavior</button>
+            </div>
+          </form>
+
+          <!-- Recent Behaviors -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Recent Behaviors</h3>
+            <div id="recentBehaviors" class="space-y-4">
+              <p class="text-gray-500">ไม่มีข้อมูล</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lab Form -->
+      <div id="tab-lab" class="tab-content">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-6">บันทึกผล Lab</h2>
+          <form id="formLab" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                <input type="date" name="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Lab Type</label>
+                <select name="labType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                  <option value="">-- เลือก --</option>
+                  <option value="CBC">CBC</option>
+                  <option value="CRP">CRP</option>
+                  <option value="LFT">LFT</option>
+                  <option value="Renal/Electrolyte">Renal/Electrolyte</option>
+                  <option value="Sputum C/S">Sputum C/S</option>
+                  <option value="Nutritional">Nutritional</option>
+                  <option value="Vitamin/Mineral">Vitamin/Mineral</option>
+                  <option value="Chest Imaging">Chest Imaging</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Test Name</label>
+                <input type="text" name="testName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="WBC, Hb, ฯลฯ">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Result</label>
+                <input type="text" name="result" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ผลแลป">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                <input type="text" name="unit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="g/dL, cells/µL, ฯลฯ">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Normal Range</label>
+                <input type="text" name="normalRange" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="13-17">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recorded By</label>
+                <input type="text" name="recordedBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อผู้บันทึก">
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="reset" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Clear</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Lab Result</button>
+            </div>
+          </form>
+
+          <!-- Recent Labs -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Recent Lab Results</h3>
+            <div id="recentLabs" class="overflow-x-auto">
+              <p class="text-gray-500">ไม่มีข้อมูล</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAR Form -->
+      <div id="tab-mar" class="tab-content">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-6">Medication Administration Record (MAR)</h2>
+          <form id="formMAR" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                <input type="date" name="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">เวลา</label>
+                <input type="time" name="time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อยา</label>
+                <input type="text" name="medName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ชื่อยา">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Dose</label>
+                <input type="text" name="dose" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="500 mg">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Route</label>
+                <select name="route" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                  <option value="">-- เลือก --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Given By</label>
+                <input type="text" name="givenBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="ผู้ให้ยา">
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                <textarea name="remarks" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="หมายเหตุ"></textarea>
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="reset" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Clear</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save MAR</button>
+            </div>
+          </form>
+
+          <!-- Today's MAR -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Today's Medication Administration</h3>
+            <div id="todayMAR" class="overflow-x-auto">
+              <p class="text-gray-500">ไม่มีข้อมูล</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Patient Management Modal -->
+  <div id="patientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">จัดการข้อมูลผู้ป่วย</h2>
+          <button id="btnCloseModal" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Patient List -->
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold mb-3">รายชื่อผู้ป่วย</h3>
+          <div id="patientList" class="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+            <p class="p-4 text-gray-500">กำลังโหลด...</p>
+          </div>
+        </div>
+
+        <!-- Add/Edit Patient Form -->
+        <div>
+          <h3 class="text-lg font-semibold mb-3">เพิ่ม/แก้ไขผู้ป่วย</h3>
+          <form id="formPatient" class="space-y-4">
+            <input type="hidden" name="editMode" value="false">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">HN *</label>
+                <input type="text" name="hn" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล *</label>
+                <input type="text" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">อายุ *</label>
+                <input type="number" name="age" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">เพศ *</label>
+                <select name="gender" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                  <option value="">-- เลือก --</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Dx (Diagnosis) *</label>
+                <input type="text" name="dx" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                <input type="text" name="allergies" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="NKDA หรือระบุยาที่แพ้">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Admission Date</label>
+                <input type="date" name="admissionDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="Active">Active</option>
+                  <option value="Discharged">Discharged</option>
+                  <option value="Transferred">Transferred</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ward</label>
+                <input type="text" name="ward" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="หอผู้ป่วย">
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+              <button type="button" id="btnCancelEdit" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+              <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Patient</button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 flex items-center gap-3">
+      <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span class="font-medium">Loading...</span>
+    </div>
+  </div>
+
+  <?!= include('JavaScript'); ?>
+
+</body>
+</html>

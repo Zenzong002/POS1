@@ -1,0 +1,1468 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// ============================================
+// Global Variables
+// ============================================
+
+let currentPatientHN = null;
+let currentPatientData = null;
+let dropdownOptions = {};
+let charts = {
+  vitals: null,
+  io: null,
+  labs: null
+};
+
+// ============================================
+// Initialization
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  initializeApp();
+});
+
+async function initializeApp() {
+  console.log('Initializing Patient Management System...');
+
+  // Set today's date as default for all date inputs
+  setDefaultDates();
+
+  // Set current time as default for all time inputs
+  setDefaultTimes();
+
+  // Initialize event listeners
+  initializeEventListeners();
+
+  // Load dropdown options
+  await loadDropdownOptions();
+
+  // Load patients list
+  await loadPatients();
+
+  console.log('Initialization complete!');
+}
+
+function setDefaultDates() {
+  const today = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="date"]').forEach(input => {
+    if (!input.value) {
+      input.value = today;
+    }
+  });
+}
+
+function setDefaultTimes() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const currentTime = `${hours}:${minutes}`;
+
+  document.querySelectorAll('input[type="time"]').forEach(input => {
+    if (!input.value) {
+      input.value = currentTime;
+    }
+  });
+}
+
+// ============================================
+// Event Listeners
+// ============================================
+
+function initializeEventListeners() {
+  // Tab navigation
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', function() {
+      switchTab(this.dataset.tab);
+    });
+  });
+
+  // Patient selection
+  document.getElementById('selectPatient').addEventListener('change', handlePatientSelection);
+  document.getElementById('btnRefreshPatients').addEventListener('click', loadPatients);
+
+  // Patient management
+  document.getElementById('btnManagePatient').addEventListener('click', openPatientModal);
+  document.getElementById('btnCloseModal').addEventListener('click', closePatientModal);
+  document.getElementById('btnCancelEdit').addEventListener('click', resetPatientForm);
+
+  // Initialize sheets
+  document.getElementById('btnInitSheets').addEventListener('click', initializeSheets);
+
+  // Form submissions
+  document.getElementById('formPatient').addEventListener('submit', handlePatientSubmit);
+  document.getElementById('formVitals').addEventListener('submit', handleVitalsSubmit);
+  document.getElementById('formIO').addEventListener('submit', handleIOSubmit);
+  document.getElementById('formClinical').addEventListener('submit', handleClinicalSubmit);
+  document.getElementById('formMedication').addEventListener('submit', handleMedicationSubmit);
+  document.getElementById('formActivity').addEventListener('submit', handleActivitySubmit);
+  document.getElementById('formBehavior').addEventListener('submit', handleBehaviorSubmit);
+  document.getElementById('formLab').addEventListener('submit', handleLabSubmit);
+  document.getElementById('formMAR').addEventListener('submit', handleMARSubmit);
+
+  // Medication log viewer
+  document.getElementById('btnViewMedLog').addEventListener('click', viewMedicationLog);
+}
+
+// ============================================
+// Tab Navigation
+// ============================================
+
+function switchTab(tabName) {
+  // Update tab buttons
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.classList.remove('active');
+  });
+  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+  // Update tab content
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  document.getElementById(`tab-${tabName}`).classList.add('active');
+
+  // Load data based on tab
+  if (currentPatientHN) {
+    loadTabData(tabName);
+  }
+}
+
+async function loadTabData(tabName) {
+  switch(tabName) {
+    case 'dashboard':
+      await loadDashboard();
+      break;
+    case 'vitals':
+      await loadRecentVitals();
+      break;
+    case 'io':
+      await loadRecentIO();
+      break;
+    case 'clinical':
+      await loadRecentClinical();
+      break;
+    case 'medication':
+      await loadMedicationList();
+      break;
+    case 'activity':
+      await loadRecentActivities();
+      break;
+    case 'behavior':
+      await loadRecentBehaviors();
+      break;
+    case 'lab':
+      await loadRecentLabs();
+      break;
+    case 'mar':
+      await loadTodayMAR();
+      break;
+  }
+}
+
+// ============================================
+// Patient Management
+// ============================================
+
+async function loadPatients() {
+  showLoading(true);
+  try {
+    google.script.run
+      .withSuccessHandler(function(patients) {
+        const select = document.getElementById('selectPatient');
+        select.innerHTML = '<option value="">-- เลือกผู้ป่วย --</option>';
+
+        patients.forEach(patient => {
+          const option = document.createElement('option');
+          option.value = patient.HN;
+          option.textContent = `${patient.HN} - ${patient['ชื่อ-นามสกุล']} (${patient.Dx})`;
+          select.appendChild(option);
+        });
+
+        updatePatientListInModal(patients);
+        showLoading(false);
+      })
+      .withFailureHandler(handleError)
+      .getAllPatients();
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+function handlePatientSelection(event) {
+  const hn = event.target.value;
+  if (hn) {
+    currentPatientHN = hn;
+    loadPatientInfo(hn);
+    loadDashboard();
+  } else {
+    currentPatientHN = null;
+    currentPatientData = null;
+    document.getElementById('patientInfo').classList.add('hidden');
+  }
+}
+
+async function loadPatientInfo(hn) {
+  try {
+    google.script.run
+      .withSuccessHandler(function(patient) {
+        if (patient) {
+          currentPatientData = patient;
+          displayPatientInfo(patient);
+        }
+      })
+      .withFailureHandler(handleError)
+      .getPatientByHN(hn);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+function displayPatientInfo(patient) {
+  document.getElementById('patientName').textContent = patient['ชื่อ-นามสกุล'];
+  document.getElementById('patientAge').textContent = patient['อายุ'] + ' ปี';
+  document.getElementById('patientDx').textContent = patient.Dx;
+  document.getElementById('patientAllergies').textContent = patient.Allergies || 'NKDA';
+  document.getElementById('patientAdmission').textContent = patient['Admission Date'];
+  document.getElementById('patientStatus').textContent = patient.Status;
+
+  document.getElementById('patientInfo').classList.remove('hidden');
+}
+
+function updatePatientListInModal(patients) {
+  const container = document.getElementById('patientList');
+  if (patients.length === 0) {
+    container.innerHTML = '<p class="p-4 text-gray-500">ยังไม่มีข้อมูลผู้ป่วย</p>';
+    return;
+  }
+
+  let html = '<table class="data-table">';
+  html += '<thead><tr><th>HN</th><th>ชื่อ-นามสกุล</th><th>Dx</th><th>Status</th><th>Actions</th></tr></thead>';
+  html += '<tbody>';
+
+  patients.forEach(patient => {
+    html += `<tr>
+      <td>${patient.HN}</td>
+      <td>${patient['ชื่อ-นามสกุล']}</td>
+      <td>${patient.Dx}</td>
+      <td><span class="badge badge-${patient.Status === 'Active' ? 'success' : 'info'}">${patient.Status}</span></td>
+      <td>
+        <button onclick="editPatient('${patient.HN}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+        <button onclick="deletePatient('${patient.HN}')" class="text-red-600 hover:text-red-800">Delete</button>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function openPatientModal() {
+  document.getElementById('patientModal').classList.remove('hidden');
+  document.getElementById('patientModal').classList.add('modal-enter');
+  loadPatients();
+}
+
+function closePatientModal() {
+  document.getElementById('patientModal').classList.add('hidden');
+  resetPatientForm();
+}
+
+function resetPatientForm() {
+  document.getElementById('formPatient').reset();
+  document.querySelector('[name="editMode"]').value = 'false';
+}
+
+async function handlePatientSubmit(event) {
+  event.preventDefault();
+
+  const formData = new FormData(event.target);
+  const editMode = formData.get('editMode') === 'true';
+  const hn = formData.get('hn');
+
+  const patientData = {
+    hn: hn,
+    name: formData.get('name'),
+    age: formData.get('age'),
+    gender: formData.get('gender'),
+    dx: formData.get('dx'),
+    allergies: formData.get('allergies'),
+    admissionDate: formData.get('admissionDate'),
+    status: formData.get('status') || 'Active',
+    ward: formData.get('ward')
+  };
+
+  showLoading(true);
+
+  try {
+    if (editMode) {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          showLoading(false);
+          if (result.success) {
+            showAlert('success', 'อัปเดตข้อมูลผู้ป่วยสำเร็จ');
+            resetPatientForm();
+            loadPatients();
+          } else {
+            showAlert('danger', result.message);
+          }
+        })
+        .withFailureHandler(handleError)
+        .updatePatient(hn, patientData);
+    } else {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          showLoading(false);
+          if (result.success) {
+            showAlert('success', 'เพิ่มผู้ป่วยใหม่สำเร็จ');
+            resetPatientForm();
+            loadPatients();
+          } else {
+            showAlert('danger', result.message);
+          }
+        })
+        .withFailureHandler(handleError)
+        .addPatient(patientData);
+    }
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+function editPatient(hn) {
+  google.script.run
+    .withSuccessHandler(function(patient) {
+      if (patient) {
+        document.querySelector('[name="editMode"]').value = 'true';
+        document.querySelector('[name="hn"]').value = patient.HN;
+        document.querySelector('[name="hn"]').readOnly = true;
+        document.querySelector('[name="name"]').value = patient['ชื่อ-นามสกุล'];
+        document.querySelector('[name="age"]').value = patient['อายุ'];
+        document.querySelector('[name="gender"]').value = patient['เพศ'];
+        document.querySelector('[name="dx"]').value = patient.Dx;
+        document.querySelector('[name="allergies"]').value = patient.Allergies || '';
+        document.querySelector('[name="admissionDate"]').value = patient['Admission Date'];
+        document.querySelector('[name="status"]').value = patient.Status;
+        document.querySelector('[name="ward"]').value = patient.Ward || '';
+
+        // Scroll to form
+        document.querySelector('#formPatient').scrollIntoView({ behavior: 'smooth' });
+      }
+    })
+    .withFailureHandler(handleError)
+    .getPatientByHN(hn);
+}
+
+function deletePatient(hn) {
+  if (confirm(`ต้องการลบผู้ป่วย HN: ${hn} ใช่หรือไม่?`)) {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          showAlert('success', 'ลบข้อมูลผู้ป่วยสำเร็จ');
+          loadPatients();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .deletePatient(hn);
+  }
+}
+
+// ============================================
+// Dropdown Options
+// ============================================
+
+async function loadDropdownOptions() {
+  try {
+    google.script.run
+      .withSuccessHandler(function(options) {
+        dropdownOptions = options;
+        populateDropdowns();
+      })
+      .withFailureHandler(handleError)
+      .getAllDropdownOptions();
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+function populateDropdowns() {
+  // O2 Support
+  populateSelect('formVitals [name="o2Support"]', dropdownOptions.O2_SUPPORT);
+
+  // Stool Type & Color
+  populateSelect('formIO [name="stoolType"]', dropdownOptions.STOOL_TYPE);
+  populateSelect('formIO [name="stoolColor"]', dropdownOptions.STOOL_COLOR);
+
+  // Medication Frequency & Route
+  populateSelect('formMedication [name="frequency"]', dropdownOptions.MEDICATION_FREQUENCY);
+  populateSelect('formMedication [name="route"]', dropdownOptions.ROUTE);
+  populateSelect('formMAR [name="route"]', dropdownOptions.ROUTE);
+}
+
+function populateSelect(selector, options) {
+  const select = document.querySelector(selector);
+  if (!select) return;
+
+  options.forEach(option => {
+    const optionElement = document.createElement('option');
+    optionElement.value = option;
+    optionElement.textContent = option;
+    select.appendChild(optionElement);
+  });
+}
+
+// ============================================
+// Dashboard
+// ============================================
+
+async function loadDashboard() {
+  if (!currentPatientHN) return;
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(data) {
+        displayDailySummary(data);
+        displayAbnormalLabs(data.abnormalLabs);
+        displayCurrentMedications(data.medications);
+        renderVitalsChart(data.vitals);
+        renderIOChart(data.intakeOutput);
+        showLoading(false);
+      })
+      .withFailureHandler(handleError)
+      .getDashboardData(currentPatientHN);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+function displayDailySummary(data) {
+  const today = new Date().toISOString().split('T')[0];
+
+  google.script.run
+    .withSuccessHandler(function(summary) {
+      let html = '<div class="space-y-4">';
+
+      // Vital Signs Summary
+      html += '<div class="border-b pb-3">';
+      html += '<h4 class="font-semibold text-gray-700 mb-2">Vital Signs</h4>';
+      if (summary.vitals.count > 0) {
+        html += `<p class="text-sm">จำนวนครั้ง: ${summary.vitals.count}</p>`;
+        html += `<p class="text-sm">Temp เฉลี่ย: ${summary.vitals.avgTemp}°C</p>`;
+        html += `<p class="text-sm">HR เฉลี่ย: ${summary.vitals.avgHR} bpm</p>`;
+      } else {
+        html += '<p class="text-sm text-gray-500">ยังไม่มีการบันทึก</p>';
+      }
+      html += '</div>';
+
+      // I/O Summary
+      html += '<div class="border-b pb-3">';
+      html += '<h4 class="font-semibold text-gray-700 mb-2">Intake/Output</h4>';
+      html += `<p class="text-sm">Total Intake: ${summary.intakeOutput.totalIntake} mL</p>`;
+      html += `<p class="text-sm">Total Output: ${summary.intakeOutput.totalOutput} mL</p>`;
+      html += `<p class="text-sm font-semibold ${summary.intakeOutput.balance >= 0 ? 'text-green-600' : 'text-red-600'}">Balance: ${summary.intakeOutput.balance} mL</p>`;
+      html += '</div>';
+
+      // Medications Summary
+      html += '<div class="border-b pb-3">';
+      html += '<h4 class="font-semibold text-gray-700 mb-2">Medications Given Today</h4>';
+      if (summary.medications.length > 0) {
+        html += `<p class="text-sm">${summary.medications.length} รายการ</p>`;
+      } else {
+        html += '<p class="text-sm text-gray-500">ยังไม่มีการให้ยา</p>';
+      }
+      html += '</div>';
+
+      // Clinical Notes Summary
+      html += '<div>';
+      html += '<h4 class="font-semibold text-gray-700 mb-2">Clinical Notes</h4>';
+      if (summary.clinical.length > 0) {
+        html += `<p class="text-sm">${summary.clinical.length} บันทึก</p>`;
+      } else {
+        html += '<p class="text-sm text-gray-500">ยังไม่มีบันทึก</p>';
+      }
+      html += '</div>';
+
+      html += '</div>';
+
+      document.getElementById('dailySummary').innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getDailySummary(currentPatientHN, today);
+}
+
+function displayAbnormalLabs(labs) {
+  const container = document.getElementById('abnormalLabs');
+
+  if (!labs || labs.length === 0) {
+    container.innerHTML = '<p class="text-gray-500">ไม่มีผลแลปผิดปกติ</p>';
+    return;
+  }
+
+  let html = '<div class="space-y-2">';
+
+  labs.forEach(lab => {
+    const flagClass = lab.Flag === 'H' ? 'alert-danger' : 'alert-warning';
+    const flagText = lab.Flag === 'H' ? 'สูง' : 'ต่ำ';
+
+    html += `<div class="alert ${flagClass}">
+      <div>
+        <strong>${lab['Test Name']}</strong>: ${lab.Result} ${lab.Unit}
+        <span class="ml-2 font-semibold">(${flagText})</span>
+        <br>
+        <small class="text-xs opacity-75">${lab.Date}</small>
+      </div>
+    </div>`;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function displayCurrentMedications(medications) {
+  const container = document.getElementById('currentMedications');
+
+  const activeMeds = medications.filter(med => med.Status === 'Active');
+
+  if (activeMeds.length === 0) {
+    container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูลยา</p>';
+    return;
+  }
+
+  let html = '<table class="data-table">';
+  html += '<thead><tr><th>ชื่อยา</th><th>Dose</th><th>Frequency</th><th>Route</th><th>Start Date</th><th>Indication</th></tr></thead>';
+  html += '<tbody>';
+
+  activeMeds.forEach(med => {
+    html += `<tr>
+      <td>${med['Med Name']}</td>
+      <td>${med.Dose}</td>
+      <td>${med.Frequency}</td>
+      <td>${med.Route}</td>
+      <td>${med['Start Date']}</td>
+      <td>${med.Indication || '-'}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ============================================
+// Charts
+// ============================================
+
+function renderVitalsChart(vitals) {
+  const ctx = document.getElementById('chartVitals');
+  if (!ctx) return;
+
+  if (charts.vitals) {
+    charts.vitals.destroy();
+  }
+
+  if (!vitals || vitals.length === 0) {
+    ctx.parentElement.innerHTML = '<p class="text-gray-500 text-center py-8">ไม่มีข้อมูล Vital Signs</p>';
+    return;
+  }
+
+  const labels = vitals.map(v => `${v.Date} ${v.Time}`);
+  const tempData = vitals.map(v => parseFloat(v['Temp (°C)']) || null);
+  const hrData = vitals.map(v => parseFloat(v['HR (bpm)']) || null);
+  const spo2Data = vitals.map(v => parseFloat(v['SpO₂ (%)']) || null);
+
+  charts.vitals = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Temperature (°C)',
+          data: tempData,
+          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          yAxisID: 'y',
+          tension: 0.3
+        },
+        {
+          label: 'Heart Rate (bpm)',
+          data: hrData,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          yAxisID: 'y1',
+          tension: 0.3
+        },
+        {
+          label: 'SpO₂ (%)',
+          data: spo2Data,
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          yAxisID: 'y2',
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Temperature (°C)'
+          }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Heart Rate (bpm)'
+          },
+          grid: {
+            drawOnChartArea: false,
+          },
+        },
+        y2: {
+          type: 'linear',
+          display: false,
+          position: 'right',
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+        }
+      }
+    }
+  });
+}
+
+function renderIOChart(ioRecords) {
+  const ctx = document.getElementById('chartIO');
+  if (!ctx) return;
+
+  if (charts.io) {
+    charts.io.destroy();
+  }
+
+  if (!ioRecords || ioRecords.length === 0) {
+    ctx.parentElement.innerHTML = '<p class="text-gray-500 text-center py-8">ไม่มีข้อมูล I/O</p>';
+    return;
+  }
+
+  const labels = ioRecords.map(io => `${io.Date} ${io.Time}`);
+  const intakeData = ioRecords.map(io => parseFloat(io['Intake (mL)']) || 0);
+  const outputData = ioRecords.map(io => parseFloat(io['Output (mL)']) || 0);
+  const balanceData = ioRecords.map(io => parseFloat(io['Balance (mL)']) || 0);
+
+  charts.io = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Intake (mL)',
+          data: intakeData,
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1
+        },
+        {
+          label: 'Output (mL)',
+          data: outputData,
+          backgroundColor: 'rgba(239, 68, 68, 0.7)',
+          borderColor: 'rgb(239, 68, 68)',
+          borderWidth: 1
+        },
+        {
+          label: 'Balance (mL)',
+          data: balanceData,
+          type: 'line',
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Volume (mL)'
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+        }
+      }
+    }
+  });
+}
+
+// ============================================
+// Form Submissions
+// ============================================
+
+async function handleVitalsSubmit(event) {
+  event.preventDefault();
+
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  const formData = new FormData(event.target);
+  const vitalData = {
+    hn: currentPatientHN,
+    date: formData.get('date'),
+    time: formData.get('time'),
+    temp: formData.get('temp'),
+    hr: formData.get('hr'),
+    rr: formData.get('rr'),
+    bp: formData.get('bp'),
+    spo2: formData.get('spo2'),
+    o2Support: formData.get('o2Support'),
+    o2Flow: formData.get('o2Flow'),
+    painScore: formData.get('painScore'),
+    gcs: formData.get('gcs'),
+    recordedBy: formData.get('recordedBy')
+  };
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          showAlert('success', 'บันทึก Vital Signs สำเร็จ');
+          event.target.reset();
+          setDefaultDates();
+          setDefaultTimes();
+          loadRecentVitals();
+          loadDashboard();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .addVitalSigns(vitalData);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+async function handleIOSubmit(event) {
+  event.preventDefault();
+
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  const formData = new FormData(event.target);
+  const ioData = {
+    hn: currentPatientHN,
+    date: formData.get('date'),
+    time: formData.get('time'),
+    intake: formData.get('intake'),
+    output: formData.get('output'),
+    urine: formData.get('urine'),
+    stoolType: formData.get('stoolType'),
+    stoolColor: formData.get('stoolColor'),
+    stoolAmount: formData.get('stoolAmount'),
+    vomit: formData.get('vomit'),
+    drain: formData.get('drain'),
+    other: formData.get('other'),
+    recordedBy: formData.get('recordedBy')
+  };
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          showAlert('success', `บันทึก I/O สำเร็จ (Balance: ${result.balance} mL)`);
+          event.target.reset();
+          setDefaultDates();
+          setDefaultTimes();
+          loadRecentIO();
+          loadDashboard();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .addIntakeOutput(ioData);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+async function handleClinicalSubmit(event) {
+  event.preventDefault();
+
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  const formData = new FormData(event.target);
+  const clinicalData = {
+    hn: currentPatientHN,
+    date: formData.get('date'),
+    time: formData.get('time'),
+    chiefComplaint: formData.get('chiefComplaint'),
+    assessment: formData.get('assessment'),
+    plan: formData.get('plan'),
+    note: formData.get('note'),
+    recordedBy: formData.get('recordedBy')
+  };
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          showAlert('success', 'บันทึก Clinical Note สำเร็จ');
+          event.target.reset();
+          setDefaultDates();
+          setDefaultTimes();
+          loadRecentClinical();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .addClinicalNote(clinicalData);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+async function handleMedicationSubmit(event) {
+  event.preventDefault();
+
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  const formData = new FormData(event.target);
+  const medData = {
+    hn: currentPatientHN,
+    medName: formData.get('medName'),
+    dose: formData.get('dose'),
+    frequency: formData.get('frequency'),
+    route: formData.get('route'),
+    startDate: formData.get('startDate'),
+    endDate: formData.get('endDate'),
+    status: formData.get('status'),
+    indication: formData.get('indication'),
+    recordedBy: formData.get('recordedBy')
+  };
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          showAlert('success', 'เพิ่มยาสำเร็จ');
+          event.target.reset();
+          setDefaultDates();
+          loadMedicationList();
+          loadDashboard();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .addMedication(medData);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+async function handleActivitySubmit(event) {
+  event.preventDefault();
+
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  const formData = new FormData(event.target);
+  const activityData = {
+    hn: currentPatientHN,
+    date: formData.get('date'),
+    time: formData.get('time'),
+    activityType: formData.get('activityType'),
+    duration: formData.get('duration'),
+    distance: formData.get('distance'),
+    note: formData.get('note'),
+    recordedBy: formData.get('recordedBy')
+  };
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          showAlert('success', 'บันทึก Activity สำเร็จ');
+          event.target.reset();
+          setDefaultDates();
+          setDefaultTimes();
+          loadRecentActivities();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .addActivity(activityData);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+async function handleBehaviorSubmit(event) {
+  event.preventDefault();
+
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  const formData = new FormData(event.target);
+  const behaviorData = {
+    hn: currentPatientHN,
+    date: formData.get('date'),
+    time: formData.get('time'),
+    behaviorType: formData.get('behaviorType'),
+    severity: formData.get('severity'),
+    trigger: formData.get('trigger'),
+    intervention: formData.get('intervention'),
+    outcome: formData.get('outcome'),
+    recordedBy: formData.get('recordedBy')
+  };
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          showAlert('success', 'บันทึก Behavior สำเร็จ');
+          event.target.reset();
+          setDefaultDates();
+          setDefaultTimes();
+          loadRecentBehaviors();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .addBehavior(behaviorData);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+async function handleLabSubmit(event) {
+  event.preventDefault();
+
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  const formData = new FormData(event.target);
+  const labData = {
+    hn: currentPatientHN,
+    date: formData.get('date'),
+    labType: formData.get('labType'),
+    testName: formData.get('testName'),
+    result: formData.get('result'),
+    unit: formData.get('unit'),
+    normalRange: formData.get('normalRange'),
+    recordedBy: formData.get('recordedBy')
+  };
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          let message = 'บันทึกผล Lab สำเร็จ';
+          if (result.flag === 'H') {
+            message += ' (ค่าสูงกว่าปกติ)';
+          } else if (result.flag === 'L') {
+            message += ' (ค่าต่ำกว่าปกติ)';
+          }
+          showAlert('success', message);
+          event.target.reset();
+          setDefaultDates();
+          loadRecentLabs();
+          loadDashboard();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .addLabRecord(labData);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+async function handleMARSubmit(event) {
+  event.preventDefault();
+
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  const formData = new FormData(event.target);
+  const marData = {
+    hn: currentPatientHN,
+    date: formData.get('date'),
+    time: formData.get('time'),
+    medName: formData.get('medName'),
+    dose: formData.get('dose'),
+    route: formData.get('route'),
+    givenBy: formData.get('givenBy'),
+    remarks: formData.get('remarks')
+  };
+
+  showLoading(true);
+
+  try {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showLoading(false);
+        if (result.success) {
+          showAlert('success', 'บันทึก MAR สำเร็จ');
+          event.target.reset();
+          setDefaultDates();
+          setDefaultTimes();
+          loadTodayMAR();
+        } else {
+          showAlert('danger', result.message);
+        }
+      })
+      .withFailureHandler(handleError)
+      .addMAR(marData);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+// ============================================
+// Load Recent Data Functions
+// ============================================
+
+async function loadRecentVitals() {
+  if (!currentPatientHN) return;
+
+  google.script.run
+    .withSuccessHandler(function(vitals) {
+      const container = document.getElementById('recentVitals');
+
+      if (!vitals || vitals.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูล</p>';
+        return;
+      }
+
+      let html = '<table class="data-table">';
+      html += '<thead><tr><th>Date</th><th>Time</th><th>Temp</th><th>HR</th><th>RR</th><th>BP</th><th>SpO₂</th><th>O₂</th></tr></thead>';
+      html += '<tbody>';
+
+      vitals.forEach(v => {
+        html += `<tr>
+          <td>${v.Date}</td>
+          <td>${v.Time}</td>
+          <td>${v['Temp (°C)']}</td>
+          <td>${v['HR (bpm)']}</td>
+          <td>${v['RR (bpm)']}</td>
+          <td>${v['BP (mmHg)']}</td>
+          <td>${v['SpO₂ (%)']}</td>
+          <td>${v['O₂ Support'] || '-'}</td>
+        </tr>`;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getVitalSignsByHN(currentPatientHN, 20);
+}
+
+async function loadRecentIO() {
+  if (!currentPatientHN) return;
+
+  google.script.run
+    .withSuccessHandler(function(records) {
+      const container = document.getElementById('recentIO');
+
+      if (!records || records.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูล</p>';
+        return;
+      }
+
+      let html = '<table class="data-table">';
+      html += '<thead><tr><th>Date</th><th>Time</th><th>Intake</th><th>Output</th><th>Balance</th><th>Stool</th></tr></thead>';
+      html += '<tbody>';
+
+      records.forEach(io => {
+        const balanceClass = io['Balance (mL)'] >= 0 ? 'text-green-600' : 'text-red-600';
+        html += `<tr>
+          <td>${io.Date}</td>
+          <td>${io.Time}</td>
+          <td>${io['Intake (mL)']} mL</td>
+          <td>${io['Output (mL)']} mL</td>
+          <td class="${balanceClass} font-semibold">${io['Balance (mL)']} mL</td>
+          <td>${io['Stool Type'] || '-'}</td>
+        </tr>`;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getIntakeOutputByHN(currentPatientHN, 20);
+}
+
+async function loadRecentClinical() {
+  if (!currentPatientHN) return;
+
+  google.script.run
+    .withSuccessHandler(function(notes) {
+      const container = document.getElementById('recentClinical');
+
+      if (!notes || notes.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูล</p>';
+        return;
+      }
+
+      let html = '';
+
+      notes.forEach(note => {
+        html += `<div class="clinical-note">
+          <div class="clinical-note-header">
+            <span class="font-semibold">${note.Date} ${note.Time}</span>
+            <span class="text-sm text-gray-600">By: ${note['Recorded By']}</span>
+          </div>
+          <div class="clinical-note-body">
+            ${note['Chief Complaint'] ? `<p><span class="clinical-note-label">CC:</span>${note['Chief Complaint']}</p>` : ''}
+            ${note.Assessment ? `<p><span class="clinical-note-label">Assessment:</span>${note.Assessment}</p>` : ''}
+            ${note.Plan ? `<p><span class="clinical-note-label">Plan:</span>${note.Plan}</p>` : ''}
+            ${note.Note ? `<p><span class="clinical-note-label">Note:</span>${note.Note}</p>` : ''}
+          </div>
+        </div>`;
+      });
+
+      container.innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getClinicalNotesByHN(currentPatientHN, 10);
+}
+
+async function loadMedicationList() {
+  if (!currentPatientHN) return;
+
+  google.script.run
+    .withSuccessHandler(function(medications) {
+      const container = document.getElementById('medicationList');
+
+      if (!medications || medications.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูลยา</p>';
+        return;
+      }
+
+      let html = '<div class="space-y-3">';
+
+      medications.forEach(med => {
+        const statusClass = med.Status === 'Active' ? 'med-card-active' : 'med-card-discontinued';
+        html += `<div class="med-card ${statusClass}">
+          <div class="flex justify-between items-start mb-2">
+            <h4 class="font-semibold text-lg">${med['Med Name']}</h4>
+            <span class="badge badge-${med.Status === 'Active' ? 'success' : 'danger'}">${med.Status}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <p><span class="font-semibold">Dose:</span> ${med.Dose}</p>
+            <p><span class="font-semibold">Frequency:</span> ${med.Frequency}</p>
+            <p><span class="font-semibold">Route:</span> ${med.Route}</p>
+            <p><span class="font-semibold">Start:</span> ${med['Start Date']}</p>
+          </div>
+          ${med.Indication ? `<p class="text-sm mt-2"><span class="font-semibold">Indication:</span> ${med.Indication}</p>` : ''}
+        </div>`;
+      });
+
+      html += '</div>';
+      container.innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getMedicationsByHN(currentPatientHN);
+}
+
+async function loadRecentActivities() {
+  if (!currentPatientHN) return;
+
+  google.script.run
+    .withSuccessHandler(function(activities) {
+      const container = document.getElementById('recentActivities');
+
+      if (!activities || activities.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูล</p>';
+        return;
+      }
+
+      let html = '<table class="data-table">';
+      html += '<thead><tr><th>Date</th><th>Time</th><th>Activity</th><th>Duration</th><th>Distance</th><th>Note</th></tr></thead>';
+      html += '<tbody>';
+
+      activities.forEach(a => {
+        html += `<tr>
+          <td>${a.Date}</td>
+          <td>${a.Time}</td>
+          <td>${a['Activity Type']}</td>
+          <td>${a['Duration (min)'] || '-'} min</td>
+          <td>${a['Distance (m)'] || '-'} m</td>
+          <td>${a.Note || '-'}</td>
+        </tr>`;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getActivitiesByHN(currentPatientHN, 20);
+}
+
+async function loadRecentBehaviors() {
+  if (!currentPatientHN) return;
+
+  google.script.run
+    .withSuccessHandler(function(behaviors) {
+      const container = document.getElementById('recentBehaviors');
+
+      if (!behaviors || behaviors.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูล</p>';
+        return;
+      }
+
+      let html = '';
+
+      behaviors.forEach(b => {
+        const severityClass = b.Severity === 'Severe' ? 'border-red-500' : b.Severity === 'Moderate' ? 'border-yellow-500' : 'border-blue-500';
+        html += `<div class="border-l-4 ${severityClass} p-4 bg-gray-50 rounded mb-3">
+          <div class="flex justify-between items-start mb-2">
+            <h4 class="font-semibold">${b['Behavior Type']}</h4>
+            <span class="text-sm text-gray-600">${b.Date} ${b.Time}</span>
+          </div>
+          ${b.Severity ? `<p class="text-sm"><span class="font-semibold">Severity:</span> ${b.Severity}</p>` : ''}
+          ${b.Trigger ? `<p class="text-sm"><span class="font-semibold">Trigger:</span> ${b.Trigger}</p>` : ''}
+          ${b.Intervention ? `<p class="text-sm"><span class="font-semibold">Intervention:</span> ${b.Intervention}</p>` : ''}
+          ${b.Outcome ? `<p class="text-sm"><span class="font-semibold">Outcome:</span> ${b.Outcome}</p>` : ''}
+        </div>`;
+      });
+
+      container.innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getBehaviorsByHN(currentPatientHN, 10);
+}
+
+async function loadRecentLabs() {
+  if (!currentPatientHN) return;
+
+  google.script.run
+    .withSuccessHandler(function(labs) {
+      const container = document.getElementById('recentLabs');
+
+      if (!labs || labs.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูล</p>';
+        return;
+      }
+
+      let html = '<table class="data-table">';
+      html += '<thead><tr><th>Date</th><th>Type</th><th>Test</th><th>Result</th><th>Unit</th><th>Range</th><th>Flag</th></tr></thead>';
+      html += '<tbody>';
+
+      labs.forEach(lab => {
+        const flagClass = lab.Flag === 'H' ? 'lab-flag-H' : lab.Flag === 'L' ? 'lab-flag-L' : 'lab-flag-N';
+        html += `<tr>
+          <td>${lab.Date}</td>
+          <td>${lab['Lab Type']}</td>
+          <td>${lab['Test Name']}</td>
+          <td class="${flagClass}">${lab.Result}</td>
+          <td>${lab.Unit || '-'}</td>
+          <td>${lab['Normal Range'] || '-'}</td>
+          <td class="${flagClass}">${lab.Flag || '-'}</td>
+        </tr>`;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getLabRecordsByHN(currentPatientHN, 30);
+}
+
+async function loadTodayMAR() {
+  if (!currentPatientHN) return;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  google.script.run
+    .withSuccessHandler(function(records) {
+      const container = document.getElementById('todayMAR');
+
+      if (!records || records.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูล</p>';
+        return;
+      }
+
+      let html = '<table class="data-table">';
+      html += '<thead><tr><th>Time</th><th>Medication</th><th>Dose</th><th>Route</th><th>Given By</th><th>Remarks</th></tr></thead>';
+      html += '<tbody>';
+
+      records.forEach(mar => {
+        html += `<tr>
+          <td>${mar.Time}</td>
+          <td>${mar['Med Name']}</td>
+          <td>${mar.Dose}</td>
+          <td>${mar.Route}</td>
+          <td>${mar['Given By']}</td>
+          <td>${mar.Remarks || '-'}</td>
+        </tr>`;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    })
+    .withFailureHandler(handleError)
+    .getMARByHN(currentPatientHN, today);
+}
+
+// ============================================
+// Utility Functions
+// ============================================
+
+function viewMedicationLog() {
+  if (!currentPatientHN) {
+    showAlert('warning', 'กรุณาเลือกผู้ป่วยก่อน');
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(logs) {
+      let message = '<h3 class="font-bold mb-3">Medication Change Log</h3>';
+
+      if (!logs || logs.length === 0) {
+        message += '<p>ยังไม่มีการเปลี่ยนแปลงยา</p>';
+      } else {
+        message += '<div class="space-y-2 max-h-96 overflow-y-auto">';
+        logs.forEach(log => {
+          message += `<div class="border-b pb-2">
+            <p class="font-semibold">${log.Date} - ${log.Action}</p>
+            <p class="text-sm">Medication: ${log['Med Name']}</p>
+            ${log['Old Value'] ? `<p class="text-sm">Old: ${log['Old Value']}</p>` : ''}
+            <p class="text-sm">New: ${log['New Value']}</p>
+            ${log.Reason ? `<p class="text-sm">Reason: ${log.Reason}</p>` : ''}
+            <p class="text-xs text-gray-600">By: ${log['Recorded By']}</p>
+          </div>`;
+        });
+        message += '</div>';
+      }
+
+      alert(message);
+    })
+    .withFailureHandler(handleError)
+    .getMedicationLogByHN(currentPatientHN);
+}
+
+function initializeSheets() {
+  showLoading(true);
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showLoading(false);
+      if (result.success) {
+        showAlert('success', 'Sheets initialized successfully!');
+      } else {
+        showAlert('danger', result.message);
+      }
+    })
+    .withFailureHandler(handleError)
+    .initializeSheets();
+}
+
+function showLoading(show) {
+  const spinner = document.getElementById('loadingSpinner');
+  if (show) {
+    spinner.classList.remove('hidden');
+  } else {
+    spinner.classList.add('hidden');
+  }
+}
+
+function showAlert(type, message) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} fixed top-4 right-4 z-50 shadow-lg max-w-md`;
+  alertDiv.innerHTML = `
+    <div class="flex items-center justify-between">
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()" class="ml-4 font-bold">&times;</button>
+    </div>
+  `;
+
+  document.body.appendChild(alertDiv);
+
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 5000);
+}
+
+function handleError(error) {
+  console.error('Error:', error);
+  showLoading(false);
+  showAlert('danger', 'เกิดข้อผิดพลาด: ' + error.message);
+}
+
+</script>
