@@ -150,6 +150,7 @@ export interface EventSections {
   locationData?: LocationData;
   giftInfo?: GiftInfo;
   decorations?: DecorationItem[];
+  visualSettings?: EventVisualSettings;
 }
 
 // ─── Submissions ──────────────────────────────────────────────────────────────
@@ -219,4 +220,205 @@ export interface ApiResponse<T> {
   data: T | null;
   error: string | null;
   loading: boolean;
+}
+
+// ─── Hero Media System ────────────────────────────────────────────────────────
+
+export type HeroMode = "static" | "ken_burns" | "video_background" | "intro_video";
+
+export type KenBurnsDirection = "zoom_in" | "zoom_out" | "pan_left" | "pan_right";
+
+export interface KenBurnsSettings {
+  direction: KenBurnsDirection;
+  duration: number;       // seconds, default 20
+  scale: number;          // e.g. 1.2
+}
+
+export interface VideoBackgroundSettings {
+  videoUrl: string;
+  posterUrl?: string;
+  autoplay: boolean;
+  loop: boolean;
+  muted: boolean;
+  overlayOpacity: number; // 0-1
+}
+
+export interface IntroVideoSettings {
+  videoUrl: string;
+  skipEnabled: boolean;
+  autoSkipSeconds?: number; // 0 = no auto skip
+}
+
+export interface HeroMediaSettings {
+  mode: HeroMode;
+  imageUrl?: string;
+  kenBurns?: KenBurnsSettings;
+  videoBackground?: VideoBackgroundSettings;
+  introVideo?: IntroVideoSettings;
+}
+
+// ─── Opening Experience ───────────────────────────────────────────────────────
+
+export type OpeningStyle = "envelope" | "curtain" | "fade" | "flower_bloom" | "none";
+
+export interface OpeningSettings {
+  style: OpeningStyle;
+  musicUrl?: string;
+  musicTitle?: string;
+  duration: number; // seconds
+  buttonText?: string; // "Open Invitation"
+}
+
+// ─── Music System ─────────────────────────────────────────────────────────────
+
+export interface MusicSettings {
+  musicUrl?: string;
+  musicTitle?: string;
+  autoPlay: boolean;
+  loop: boolean;
+}
+
+// ─── Section Animation System ─────────────────────────────────────────────────
+
+export type AnimationType =
+  | "fade_up"
+  | "fade_down"
+  | "fade_left"
+  | "fade_right"
+  | "scale_in"
+  | "zoom_in"
+  | "blur_reveal"
+  | "parallax"
+  | "none";
+
+export interface SectionAnimationConfig {
+  heroAnimation: AnimationType;
+  storyAnimation: AnimationType;
+  timelineAnimation: AnimationType;
+  scheduleAnimation: AnimationType;
+  galleryAnimation: AnimationType;
+  locationAnimation: AnimationType;
+  rsvpAnimation: AnimationType;
+  blessingAnimation: AnimationType;
+  giftAnimation: AnimationType;
+}
+
+// ─── Layer Engine 2.0 ─────────────────────────────────────────────────────────
+
+export type LayerType = "background" | "image" | "video" | "decoration" | "text" | "overlay";
+
+export interface Layer {
+  id: string;
+  name: string;
+  type: LayerType;
+  imageUrl?: string;
+  videoUrl?: string;
+  text?: string;
+  positionX: number;   // percentage 0-100
+  positionY: number;
+  width: number;       // percentage
+  height: number;
+  rotation: number;
+  opacity: number;     // 0-1
+  zIndex: number;
+}
+
+// ─── Floating Decorations ─────────────────────────────────────────────────────
+
+export type FloatingAnimationType = "fall" | "float" | "sparkle" | "drift";
+
+export interface FloatingDecorationConfig {
+  enabled: boolean;
+  imageUrl?: string;   // custom image, else use preset
+  preset?: "flowers" | "leaves" | "sparkles" | "particles" | "custom" | "none";
+  speed: number;       // 1-10
+  density: number;     // 1-50 (number of elements)
+  opacity: number;     // 0-1
+  animationType: FloatingAnimationType;
+}
+
+// ─── Section Background ───────────────────────────────────────────────────────
+
+export type BackgroundType = "solid" | "gradient" | "image" | "video";
+
+export interface SectionBackground {
+  type: BackgroundType;
+  solidColor?: string;
+  gradient?: string;   // CSS gradient string
+  imageUrl?: string;
+  videoUrl?: string;
+  overlayColor?: string;
+  overlayOpacity?: number;
+}
+
+// ─── Extended EventSections ───────────────────────────────────────────────────
+
+export interface EventVisualSettings {
+  heroMedia?: HeroMediaSettings;
+  openingSettings?: OpeningSettings;
+  musicSettings?: MusicSettings;
+  sectionAnimations?: SectionAnimationConfig;
+  floatingDecorations?: FloatingDecorationConfig;
+  sectionBackgrounds?: Record<string, SectionBackground>;  // keyed by section name
+  layers?: Record<string, Layer[]>;                         // keyed by section name
+}
+
+// ─── Guest / CRM System ───────────────────────────────────────────────────────
+
+export type GuestStatus =
+  | "invited"
+  | "viewed"
+  | "rsvp_pending"
+  | "attending"
+  | "not_attending"
+  | "completed";
+
+export interface Guest {
+  id: string;
+  eventId: string;
+  fullName: string;
+  nickname?: string;
+  phone?: string;
+  email?: string;
+  token: string;           // unique 8-char random token
+  invitationUrl: string;   // full URL
+  viewed: boolean;
+  viewedAt?: Timestamp | Date | string;
+  firstVisit?: Timestamp | Date | string;
+  lastVisit?: Timestamp | Date | string;
+  visitCount?: number;
+  rsvpStatus?: AttendanceStatus;
+  rsvpAt?: Timestamp | Date | string;
+  guestCount?: number;
+  reminderSent: boolean;
+  reminderSentAt?: Timestamp | Date | string;
+  notes?: string;
+  status: GuestStatus;
+  createdAt?: Timestamp | Date | string;
+  updatedAt?: Timestamp | Date | string;
+}
+
+export interface InvitationView {
+  id: string;
+  guestId: string;
+  eventId: string;
+  token: string;
+  viewedAt: Timestamp | Date | string;
+  userAgent?: string;
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+export interface InvitationAnalytics {
+  totalGuests: number;
+  viewed: number;
+  notViewed: number;
+  openRate: number;       // percentage
+  rsvpTotal: number;
+  attending: number;
+  notAttending: number;
+  maybe: number;
+  rsvpRate: number;       // percentage
+  viewsByDay: Record<string, number>;
+  rsvpsByDay: Record<string, number>;
 }

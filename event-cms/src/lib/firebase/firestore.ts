@@ -33,6 +33,9 @@ import type {
   Theme,
   EventSections,
   User as AppUser,
+  Guest,
+  InvitationView,
+  GuestStatus,
 } from "../types";
 
 // ─── Collection Names ─────────────────────────────────────────────────────────
@@ -49,6 +52,8 @@ export const COLLECTIONS = {
   BLESSINGS: "blessings",
   USERS: "users",
   ANALYTICS: "analytics",
+  GUESTS: "guests",
+  INVITATION_VIEWS: "invitation_views",
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
@@ -296,6 +301,67 @@ export const usersCollection = {
   update: (id: string, data: UpdateData<AppUser>) =>
     patchDoc<AppUser>(COLLECTIONS.USERS, id, data),
   remove: (id: string) => removeDoc(COLLECTIONS.USERS, id),
+};
+
+// --- Guests ------------------------------------------------------------------
+
+export const guestsCollection = {
+  /** Fetch a single guest document by id. */
+  get: (id: string) => fetchDoc<Guest>(COLLECTIONS.GUESTS, id),
+
+  /** List all guests belonging to an event, ordered by creation date. */
+  listByEvent: (eventId: string) =>
+    fetchDocs<Guest>(COLLECTIONS.GUESTS, [
+      where("eventId", "==", eventId),
+      orderBy("createdAt", "desc"),
+    ]),
+
+  /** Create a new guest document; returns the generated document id. */
+  create: (data: WithFieldValue<Omit<Guest, "id">>) =>
+    createDoc<Guest>(COLLECTIONS.GUESTS, data),
+
+  /** Partial-update an existing guest document. */
+  update: (id: string, data: UpdateData<Guest>) =>
+    patchDoc<Guest>(COLLECTIONS.GUESTS, id, data),
+
+  /** Delete a guest document. */
+  remove: (id: string) => removeDoc(COLLECTIONS.GUESTS, id),
+
+  /** Look up a guest by their unique invitation token. Returns null if not found. */
+  getByToken: (token: string) =>
+    fetchDocs<Guest>(COLLECTIONS.GUESTS, [where("token", "==", token)]).then(
+      (docs) => docs[0] ?? null
+    ),
+
+  /** List guests for an event filtered by a specific status. */
+  getByEventAndStatus: (eventId: string, status: GuestStatus) =>
+    fetchDocs<Guest>(COLLECTIONS.GUESTS, [
+      where("eventId", "==", eventId),
+      where("status", "==", status),
+      orderBy("createdAt", "desc"),
+    ]),
+};
+
+// --- Invitation Views --------------------------------------------------------
+
+export const invitationViewsCollection = {
+  /** Record a new invitation view event. Returns the generated document id. */
+  create: (data: WithFieldValue<Omit<InvitationView, "id">>) =>
+    createDoc<InvitationView>(COLLECTIONS.INVITATION_VIEWS, data),
+
+  /** List all view records for a specific guest, ordered by view time. */
+  listByGuest: (guestId: string) =>
+    fetchDocs<InvitationView>(COLLECTIONS.INVITATION_VIEWS, [
+      where("guestId", "==", guestId),
+      orderBy("viewedAt", "desc"),
+    ]),
+
+  /** List all view records for an event, ordered by view time. */
+  listByEvent: (eventId: string) =>
+    fetchDocs<InvitationView>(COLLECTIONS.INVITATION_VIEWS, [
+      where("eventId", "==", eventId),
+      orderBy("viewedAt", "desc"),
+    ]),
 };
 
 // ─── Re-export Timestamp for convenience ─────────────────────────────────────

@@ -145,3 +145,86 @@ export function randomId(length = 12): string {
     chars.charAt(Math.floor(Math.random() * chars.length))
   ).join("");
 }
+
+// ─── Invitation Helpers ───────────────────────────────────────────────────────
+
+/**
+ * Generate a unique 8-character invitation token (URL-safe).
+ * Uses an unambiguous character set that avoids visually similar glyphs
+ * (e.g. 0/O, 1/I/l).
+ *
+ * @example
+ * generateToken() // "aB3mZ9xK"
+ */
+export function generateToken(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+/**
+ * Build a personalized invitation URL from a base URL and a guest token.
+ *
+ * @param baseUrl - Root URL of the invitation site (no trailing slash).
+ * @param token   - 8-character guest token produced by `generateToken`.
+ *
+ * @example
+ * buildInvitationUrl("https://myevent.com", "aB3mZ9xK")
+ * // "https://myevent.com/invite/aB3mZ9xK"
+ */
+export function buildInvitationUrl(baseUrl: string, token: string): string {
+  return `${baseUrl}/invite/${token}`;
+}
+
+/**
+ * Export a guest list to a CSV-formatted string.
+ * The first row is a header row.
+ * All cell values are double-quoted and internal double-quotes are escaped.
+ *
+ * @param guests - Array of guest-like objects (does not require a full `Guest` record).
+ */
+export function guestsToCSV(
+  guests: {
+    fullName: string;
+    phone?: string;
+    email?: string;
+    status: string;
+    rsvpStatus?: string;
+    guestCount?: number;
+    viewedAt?: unknown;
+  }[]
+): string {
+  const headers = ['Name', 'Phone', 'Email', 'Status', 'RSVP', 'Guests', 'Viewed At'];
+  const rows = guests.map(g => [
+    g.fullName,
+    g.phone ?? '',
+    g.email ?? '',
+    g.status,
+    g.rsvpStatus ?? '',
+    String(g.guestCount ?? ''),
+    g.viewedAt ? String(g.viewedAt) : '',
+  ]);
+  return [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+}
+
+/**
+ * Parse a CSV text export (e.g. from a spreadsheet) into guest import rows.
+ * Automatically skips a header row when the first column header contains "name".
+ * Rows with an empty `fullName` are filtered out.
+ *
+ * Expected column order: fullName, phone, email (additional columns are ignored).
+ *
+ * @param csv - Raw CSV string.
+ */
+export function parseGuestCSV(csv: string): { fullName: string; phone: string; email: string }[] {
+  const lines = csv.trim().split('\n');
+  const dataLines =
+    lines.length > 1 && lines[0].toLowerCase().includes('name') ? lines.slice(1) : lines;
+  return dataLines
+    .map(line => {
+      const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+      return { fullName: cols[0] ?? '', phone: cols[1] ?? '', email: cols[2] ?? '' };
+    })
+    .filter(g => g.fullName.length > 0);
+}

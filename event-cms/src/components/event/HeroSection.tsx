@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import type { HeroData, Theme, DecorationItem } from "@/lib/types";
+import type { HeroData, Theme, DecorationItem, HeroMediaSettings } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import CountdownTimer from "./CountdownTimer";
 import SectionWrapper from "./SectionWrapper";
+import HeroWrapper from "./HeroWrapper";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ interface HeroSectionProps {
   heroData: HeroData;
   theme: Theme;
   decorations: DecorationItem[];
+  heroMedia?: HeroMediaSettings;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ export default function HeroSection({
   heroData,
   theme,
   decorations,
+  heroMedia,
 }: HeroSectionProps) {
   const {
     eventTitle,
@@ -56,44 +59,56 @@ export default function HeroSection({
 
   const formattedDate = formatDate(eventDate, "en-US");
 
-  return (
+  // Whether a HeroWrapper mode takes over the background rendering
+  const delegateBackground =
+    heroMedia &&
+    (heroMedia.mode === "ken_burns" ||
+      heroMedia.mode === "video_background" ||
+      Boolean(heroMedia.imageUrl));
+
+  // ── Overlay content ────────────────────────────────────────────────────────
+
+  const overlayContent = (
     <SectionWrapper
       id="hero"
       decorations={decorations}
       className="min-h-svh flex flex-col"
+      style={{ background: "transparent" }}
     >
-      {/* ── Background ─────────────────────────────────────────────────────── */}
-      <div className="absolute inset-0 -z-10">
-        {heroBackgroundUrl ? (
-          <Image
-            src={heroBackgroundUrl}
-            alt="Hero background"
-            fill
-            priority
-            sizes="100vw"
-            style={{ objectFit: "cover", objectPosition: "center" }}
-          />
-        ) : (
+      {/* ── Background (only when not delegated to HeroWrapper) ─────────────── */}
+      {!delegateBackground && (
+        <div className="absolute inset-0 -z-10">
+          {heroBackgroundUrl ? (
+            <Image
+              src={heroBackgroundUrl}
+              alt="Hero background"
+              fill
+              priority
+              sizes="100vw"
+              style={{ objectFit: "cover", objectPosition: "center" }}
+            />
+          ) : (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
+              }}
+            />
+          )}
+          {/* Dark overlay for readability */}
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
+              background:
+                "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.55) 100%)",
             }}
           />
-        )}
-        {/* Dark overlay for readability */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.55) 100%)",
-          }}
-        />
-      </div>
+        </div>
+      )}
 
-      {/* ── Content ────────────────────────────────────────────────────────── */}
+      {/* ── Content ──────────────────────────────────────────────────────────── */}
       <div className="relative z-20 flex flex-col items-center justify-center flex-1 px-6 py-24 text-center">
 
         {/* Decorative top divider */}
@@ -301,4 +316,16 @@ export default function HeroSection({
       </div>
     </SectionWrapper>
   );
+
+  // ── Render with or without HeroWrapper ─────────────────────────────────────
+
+  if (delegateBackground) {
+    return (
+      <HeroWrapper heroMedia={heroMedia}>
+        {overlayContent}
+      </HeroWrapper>
+    );
+  }
+
+  return overlayContent;
 }

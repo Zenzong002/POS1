@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Users,
+  BarChart2,
 } from 'lucide-react';
 
 // ─── Nav item type ────────────────────────────────────────────────────────────
@@ -20,6 +22,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  dividerBefore?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
